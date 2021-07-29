@@ -10,8 +10,10 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -20,6 +22,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -131,20 +134,10 @@ fun MainMapScreen(navController: NavController, permissionsGranted: Boolean){
     //        }
    //     }
     ) {
-        Row{
 
-            Box(
-                Modifier
-                    .animateContentSize(
-                        animationSpec = tween(
-                            durationMillis = 1000,
-                            easing = LinearOutSlowInEasing
-                        )
-                    )
-                    .height(if (lastMarker == null) 600.dp else 300.dp)
-            ){
+            Box {
 
-
+                Box{
                 MapViewContainer(
                     map = rememberMapViewWithLifecycle(),
                     latitude = "1",
@@ -155,13 +148,27 @@ fun MainMapScreen(navController: NavController, permissionsGranted: Boolean){
                         lastMarker = it
                     }
                 )
-            }
-            AnimatedVisibility(visible = (lastMarker != null)) {
+                }
 
-                TextButton(onClick = { /*TODO*/ }) {
-                    Text("Save")
+                Box(Modifier.fillMaxWidth().height(150.dp).align(Alignment.BottomCenter)) {
+
+                    AnimatedVisibility(visible = (lastMarker != null)) {
+
+                        TextButton(
+                            onClick = { /*TODO*/ }, modifier = Modifier.animateContentSize(
+                                animationSpec = tween(
+                                    durationMillis = 1000,
+                                    easing = LinearOutSlowInEasing
+                                )
+                            )
+                                .height(if (lastMarker == null) 0.dp else 150.dp)
+                                .fillMaxWidth()
+                                .background(Color.Black)
+                        ) {
+                            Text("Save")
+                        }
+                    }
                 }
             }
         }
     }
-}
