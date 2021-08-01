@@ -2,11 +2,11 @@ package com.example.geoalarm
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import com.example.geoalarm.data.room.AlarmsDao
 
 class AlarmsScreenViewModel(
     val database: AlarmsDao,
-    application: Application
-) : AndroidViewModel(application) {
+) : ViewModel() {
 
 }

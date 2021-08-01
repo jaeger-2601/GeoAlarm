@@ -5,6 +5,6 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 
 @Composable
-fun AlarmScreen(){
+fun AlarmScreen(viewModel: AlarmsScreenViewModel){
     Text("Alarms")
 }
