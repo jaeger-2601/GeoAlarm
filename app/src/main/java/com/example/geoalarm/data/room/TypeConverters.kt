@@ -19,7 +19,7 @@ class TypeConverters {
 
     @TypeConverter
     fun latLngToString(location: LatLng?): String?{
-        return location?.toString()
+        return "${location?.latitude},${location?.longitude}"
     }
 
     @TypeConverter

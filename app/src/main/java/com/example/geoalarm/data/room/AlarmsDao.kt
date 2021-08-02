@@ -8,17 +8,20 @@ import androidx.room.Query
 import com.example.geoalarm.data.Alarm
 
 @Dao
-abstract class AlarmsDao {
+interface AlarmsDao {
 
     @Query("SELECT * FROM alarms WHERE id = :id")
-    abstract fun get(id: Int): Alarm?
+    suspend fun get(id: Int): Alarm?
 
     @Query("SELECT * FROM alarms")
-    abstract fun getAllAlarms(): LiveData<List<Alarm>>
+    fun getAllAlarms(): LiveData<List<Alarm>>
 
     @Insert
-    abstract fun insert(alarm: Alarm)
+    suspend fun insert(alarm: Alarm)
 
     @Delete
-    abstract fun delete(alarm: Alarm)
+    suspend fun delete(alarm: Alarm)
+
+    @Query("DELETE FROM alarms")
+    suspend fun deleteAll()
 }
