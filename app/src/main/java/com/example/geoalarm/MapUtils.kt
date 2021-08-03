@@ -1,6 +1,7 @@
 package com.example.geoalarm
 
 import android.os.Bundle
+import android.util.Log
 import androidx.annotation.FloatRange
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -16,7 +17,7 @@ import com.google.android.libraries.maps.MapView
  * Remembers a MapView and gives it the lifecycle of the current LifecycleOwner
  */
 @Composable
-fun rememberMapViewWithLifecycle(): MapView {
+fun rememberMapViewWithLifecycle(onMapDestroy: () -> Unit): MapView {
     val context = LocalContext.current
     val mapView = remember {
         MapView(context).apply {
@@ -27,7 +28,7 @@ fun rememberMapViewWithLifecycle(): MapView {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     DisposableEffect(lifecycle, mapView) {
         // Make MapView follow the current lifecycle
-        val lifecycleObserver = getMapLifecycleObserver(mapView)
+        val lifecycleObserver = getMapLifecycleObserver(mapView, onMapDestroy)
         lifecycle.addObserver(lifecycleObserver)
         onDispose {
             lifecycle.removeObserver(lifecycleObserver)
@@ -37,7 +38,7 @@ fun rememberMapViewWithLifecycle(): MapView {
     return mapView
 }
 
-private fun getMapLifecycleObserver(mapView: MapView): LifecycleEventObserver =
+private fun getMapLifecycleObserver(mapView: MapView, onMapDestroy: () -> Unit): LifecycleEventObserver =
     LifecycleEventObserver { _, event ->
         when (event) {
             Lifecycle.Event.ON_CREATE -> mapView.onCreate(Bundle())
@@ -45,10 +46,17 @@ private fun getMapLifecycleObserver(mapView: MapView): LifecycleEventObserver =
             Lifecycle.Event.ON_RESUME -> mapView.onResume()
             Lifecycle.Event.ON_PAUSE -> mapView.onPause()
             Lifecycle.Event.ON_STOP -> mapView.onStop()
-            Lifecycle.Event.ON_DESTROY -> mapView.onDestroy()
+            Lifecycle.Event.ON_DESTROY -> onDestroy(mapView, onMapDestroy)
             else -> throw IllegalStateException()
         }
     }
+
+fun onDestroy(mapView: MapView, onMapDestroy: () -> Unit){
+    Log.d("onDestroy", "MapView destroyed")
+    onMapDestroy()
+    mapView.onDestroy()
+}
+
 
 
 

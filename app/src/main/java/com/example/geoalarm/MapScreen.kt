@@ -27,6 +27,7 @@ import com.example.geoalarm.data.AlarmType
 import com.example.geoalarm.data.MapScreenViewModel
 import com.google.android.libraries.maps.GoogleMap
 import com.google.android.libraries.maps.MapView
+import com.google.android.libraries.maps.MapsInitializer
 import com.google.android.libraries.maps.model.Circle
 import com.google.android.libraries.maps.model.CircleOptions
 import com.google.android.libraries.maps.model.Marker
@@ -35,110 +36,20 @@ import com.google.maps.android.ktx.awaitMap
 import kotlinx.coroutines.launch
 
 
-val CURRENT_CIRCLE_OPTIONS =
-    CircleOptions()
-        .strokeWidth(2f)
-        .strokeColor(0x33DCD90D)
-        .fillColor(0x44DCD90D)
-        .visible(true)
-        .zIndex(100f)
-
-val ENTER_CIRCLE_OPTIONS =
-    CircleOptions()
-        .strokeWidth(2f)
-        .strokeColor(0x33FF2F09)
-        .fillColor(0x44DCD90D)
-        .visible(true)
-        .zIndex(100f)
-
-val EXIT_CIRCLE_OPTIONS =
-    CircleOptions()
-        .strokeWidth(2f)
-        .strokeColor(0x33BEB7B5)
-        .fillColor(0x44DCD90D)
-        .visible(true)
-        .zIndex(100f)
-
-val CURRENT_MARKER_OPTIONS =
-    MarkerOptions()
-        .visible(true)
-
-val ENTER_MARKER_OPTIONS =
-    MarkerOptions()
-        .visible(true)
-
-val EXIT_MARKER_OPTIONS =
-    MarkerOptions()
-        .visible(true)
-
-@SuppressLint("MissingPermission")
-fun MapInitializer(googleMap: GoogleMap, alarms: List<Alarm>, permissionsGranted: Boolean){
-
-    Log.i("MapInitializer", "Map Initialized")
-
-    googleMap.mapType = GoogleMap.MAP_TYPE_TERRAIN
-    googleMap.isMyLocationEnabled = permissionsGranted
-
-
-    for (alarm in alarms) {
-        if (alarm.is_active) {
-            if (alarm.type == AlarmType.ON_ENTRY) {
-
-                googleMap.addMarker(
-                    ENTER_MARKER_OPTIONS
-                        .position(alarm.location)
-                        .title(alarm.name)
-                        .snippet(
-                            "Lat: %.4f Long: %.4f".format(
-                                alarm.location.latitude,
-                                alarm.location.longitude
-                            )
-                        )
-                )
-
-                googleMap.addCircle(
-                    ENTER_CIRCLE_OPTIONS
-                        .center(alarm.location)
-                        .radius(alarm.radius.toDouble())
-                )
-
-            } else {
-                googleMap.addMarker(
-                    EXIT_MARKER_OPTIONS
-                        .position(alarm.location)
-                        .title(alarm.name)
-                        .snippet(
-                            "Lat: %.4f Long: %.4f".format(
-                                alarm.location.latitude,
-                                alarm.location.longitude
-                            )
-                        )
-                )
-
-                googleMap.addCircle(
-                    EXIT_CIRCLE_OPTIONS
-                        .center(alarm.location)
-                        .radius(alarm.radius.toDouble())
-                )
-            }
-        }
-
-    }
-}
-
 
 @Composable
 fun MapViewContainer(
     map: MapView,
     alarms : LiveData<List<Alarm>>,
+    MapInitializer: (GoogleMap, Boolean) -> Unit,
+    isMapInitialized: LiveData<Boolean>,
     permissionsGranted: Boolean,
     currentCircleSize: () -> Double,
     MoveMarker: (Marker?, Circle?) -> Unit,
 ) {
 
     val coroutineScope = rememberCoroutineScope()
-    var isMapInitialized by rememberSaveable{ mutableStateOf(false) }
-
+    val isMapInit by isMapInitialized.observeAsState(false)
 
     AndroidView({ map }) { mapView ->
 
@@ -147,21 +58,9 @@ fun MapViewContainer(
 
             Log.d("MapViewContainer", "couroutineScope : Map rendered")
 
-            if (!isMapInitialized) {
+            if (!isMapInit) {
 
-                alarms.value?.let {
-
-                    // TODO: after exiting app and reopening, none of the markers are visible. Change lifecycle methods to toggle isMapInitialized to false when map is destroyed
-
-                    MapInitializer(
-                        googleMap = googleMap,
-                        alarms = it,
-                        permissionsGranted = permissionsGranted
-                    )
-                    isMapInitialized = true
-                }
-
-                if (!isMapInitialized) alarms.observeForever {
+                alarms.observeForever {
                     it.lastOrNull()?.let { alarm ->
                         Log.d("MapViewContainer", "observeForever : alarms list changed")
                         if (alarm.is_active) {
@@ -207,6 +106,11 @@ fun MapViewContainer(
                         }
                     }
                 }
+
+                // FIXME: after exiting and reopening app, none of the markers are visible.
+                // TODO: Change lifecycle methods to toggle isMapInitialized to false when map is destroyed
+                MapInitializer(googleMap, permissionsGranted)
+
             }
 
             googleMap.setOnMarkerClickListener {
@@ -349,7 +253,6 @@ fun MainMapScreen(
         topBar = {
             TopAppBar(backgroundColor = Color(51, 65, 145)) {
                 IconButton(onClick = {
-                    Toast.makeText(context, "Button clicked", Toast.LENGTH_SHORT).show()
                     navController.navigate("alarms")
                 }) {
                     Icon(Icons.Default.Menu, "Menu", tint = Color.White)
@@ -364,8 +267,10 @@ fun MainMapScreen(
 
             Box {
                 MapViewContainer(
-                    map = rememberMapViewWithLifecycle(),
+                    map = rememberMapViewWithLifecycle { mapViewModel.onMapDestroyed() },
                     alarms = mapViewModel.alarms,
+                    isMapInitialized = mapViewModel.isMapInitialized,
+                    MapInitializer = { mMap, permissions -> mapViewModel.MapInitializer(mMap, permissions) },
                     permissionsGranted = permissionsGranted,
                     currentCircleSize = { (areaRadius ?: 0).toDouble() },
                     MoveMarker = { m: Marker?, c: Circle? -> mapViewModel.onMoveMarker(m, c) }
@@ -381,8 +286,8 @@ fun MainMapScreen(
 
                 AnimatedVisibility(
                     visible = (lastMarker != null),
-                    enter = slideInVertically(animationSpec = tween(durationMillis = 1000)),
-                    exit = slideOutVertically(animationSpec = tween(durationMillis = 1000))
+                    enter = fadeIn(animationSpec = tween(durationMillis = 1000)),
+                    exit = fadeOut(animationSpec = tween(durationMillis = 1000))
                 ) {
 
                     MarkerSaveMenu(mapViewModel)
@@ -392,6 +297,6 @@ fun MainMapScreen(
     }
 }
 
-// TODO : design UI to add alarm
+// TODO : fix map double marker add bug
 // TODO : design UI to display alarms
 // TODO : add alarm features

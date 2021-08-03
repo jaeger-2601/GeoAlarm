@@ -1,7 +1,14 @@
 package com.example.geoalarm.data
 
+import android.annotation.SuppressLint
+import android.util.Log
 import androidx.lifecycle.*
+import com.example.geoalarm.ENTER_CIRCLE_OPTIONS
+import com.example.geoalarm.ENTER_MARKER_OPTIONS
+import com.example.geoalarm.EXIT_CIRCLE_OPTIONS
+import com.example.geoalarm.EXIT_MARKER_OPTIONS
 import com.example.geoalarm.data.room.AlarmsDao
+import com.google.android.libraries.maps.GoogleMap
 import com.google.android.libraries.maps.model.Circle
 import com.google.android.libraries.maps.model.Marker
 import kotlinx.coroutines.launch
@@ -32,6 +39,10 @@ class MapScreenViewModel(
     val alarmType: LiveData<AlarmType>
         get() = _alarmType
 
+    private val _isMapInitialized = MutableLiveData(false)
+    val isMapInitialized: LiveData<Boolean>
+        get() = _isMapInitialized
+
     val areaRadius = Transformations.map(sliderPosition) {
         sliderPosition.value?.times(1000)?.toInt()
     }
@@ -39,9 +50,6 @@ class MapScreenViewModel(
 
     val alarms = database.getAllAlarms()
 
-    init {
-
-    }
 
     fun onMoveMarker(marker: Marker?, circle: Circle?) {
         lastMarker.value?.remove()
@@ -73,7 +81,7 @@ class MapScreenViewModel(
                     Alarm(
                         name = alarmName.value!!,
                         location = it.position,
-                        radius = areaRadius?.value ?: 1,
+                        radius = areaRadius.value ?: 1,
                         type = alarmType.value!!,
                         is_active = is_active,
                         created_at = Date()
@@ -82,4 +90,73 @@ class MapScreenViewModel(
             }
         }
     }
+
+    @SuppressLint("MissingPermission")
+    fun MapInitializer(googleMap: GoogleMap, permissionsGranted: Boolean) {
+
+        Log.i("MapInitializer", "Entered MapInitializer")
+
+        googleMap.mapType = GoogleMap.MAP_TYPE_TERRAIN
+        googleMap.isMyLocationEnabled = permissionsGranted
+
+        //make sure alarms is not null
+        alarms.value?.let {
+            Log.i("MapInitializer", "Map Initialized")
+            // place marker on active alarms in the map
+            for (alarm in it) {
+
+                if (alarm.is_active) {
+                    if (alarm.type == AlarmType.ON_ENTRY) {
+
+                        googleMap.addMarker(
+                            ENTER_MARKER_OPTIONS
+                                .position(alarm.location)
+                                .title(alarm.name)
+                                .snippet(
+                                    "Lat: %.4f Long: %.4f".format(
+                                        alarm.location.latitude,
+                                        alarm.location.longitude
+                                    )
+                                )
+                        )
+
+                        googleMap.addCircle(
+                            ENTER_CIRCLE_OPTIONS
+                                .center(alarm.location)
+                                .radius(alarm.radius.toDouble())
+                        )
+
+                    } else {
+                        googleMap.addMarker(
+                            EXIT_MARKER_OPTIONS
+                                .position(alarm.location)
+                                .title(alarm.name)
+                                .snippet(
+                                    "Lat: %.4f Long: %.4f".format(
+                                        alarm.location.latitude,
+                                        alarm.location.longitude
+                                    )
+                                )
+                        )
+
+                        googleMap.addCircle(
+                            EXIT_CIRCLE_OPTIONS
+                                .center(alarm.location)
+                                .radius(alarm.radius.toDouble())
+                        )
+                    }
+                }
+
+            }
+
+            _isMapInitialized.value = true
+        }
+
+    }
+
+    fun onMapDestroyed(){
+        _isMapInitialized.value = false
+    }
+
+
 }

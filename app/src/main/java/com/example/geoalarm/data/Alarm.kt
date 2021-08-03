@@ -26,6 +26,6 @@ data class Alarm (
     @ColumnInfo(name = "location") val location: LatLng,
     @ColumnInfo(name = "radius") val radius: Int,
     @ColumnInfo(name = "type") val type: AlarmType,
-    @ColumnInfo(name = "is_active") val is_active: Boolean,
+    @ColumnInfo(name = "is_active") var is_active: Boolean,
     @ColumnInfo(name = "created_at") val created_at: Date
 )
