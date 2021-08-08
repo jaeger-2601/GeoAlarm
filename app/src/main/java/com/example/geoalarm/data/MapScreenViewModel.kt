@@ -27,7 +27,7 @@ class MapScreenViewModel(
     val lastCircle: LiveData<Circle?>
         get() = _lastCircle
 
-    private val _alarmName = MutableLiveData<String>("")
+    private val _alarmName = MutableLiveData("")
     val alarmName: LiveData<String>
         get() = _alarmName
 
@@ -102,6 +102,9 @@ class MapScreenViewModel(
         //make sure alarms is not null
         alarms.value?.let {
             Log.i("MapInitializer", "Map Initialized")
+
+            _isMapInitialized.value = true
+
             // place marker on active alarms in the map
             for (alarm in it) {
 

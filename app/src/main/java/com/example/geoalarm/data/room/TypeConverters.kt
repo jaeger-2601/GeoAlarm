@@ -14,11 +14,11 @@ class TypeConverters {
 
     @TypeConverter
     fun dateToTimestamp(date: Date?): Long? {
-        return date?.time?.toLong()
+        return date?.time
     }
 
     @TypeConverter
-    fun latLngToString(location: LatLng?): String?{
+    fun latLngToString(location: LatLng?): String {
         return "${location?.latitude},${location?.longitude}"
     }
 

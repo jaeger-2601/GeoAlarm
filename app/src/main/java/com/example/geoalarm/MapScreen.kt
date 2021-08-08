@@ -1,19 +1,23 @@
 package com.example.geoalarm
 
-import android.annotation.SuppressLint
 import android.util.Log
-import android.widget.Toast
-import androidx.compose.runtime.Composable
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,14 +31,11 @@ import com.example.geoalarm.data.AlarmType
 import com.example.geoalarm.data.MapScreenViewModel
 import com.google.android.libraries.maps.GoogleMap
 import com.google.android.libraries.maps.MapView
-import com.google.android.libraries.maps.MapsInitializer
 import com.google.android.libraries.maps.model.Circle
-import com.google.android.libraries.maps.model.CircleOptions
 import com.google.android.libraries.maps.model.Marker
 import com.google.android.libraries.maps.model.MarkerOptions
 import com.google.maps.android.ktx.awaitMap
 import kotlinx.coroutines.launch
-
 
 
 @Composable
@@ -56,59 +57,62 @@ fun MapViewContainer(
         coroutineScope.launch {
             val googleMap = mapView.awaitMap()
 
-            Log.d("MapViewContainer", "couroutineScope : Map rendered")
+            Log.d("MapViewContainer", "coroutineScope : Map rendered")
 
             if (!isMapInit) {
 
-                alarms.observeForever {
-                    it.lastOrNull()?.let { alarm ->
-                        Log.d("MapViewContainer", "observeForever : alarms list changed")
-                        if (alarm.is_active) {
-                            if (alarm.type == AlarmType.ON_ENTRY) {
+                // LiveData is an asynchronous query, you get the LiveData object but it might contain no data.
+                // LiveData is to watch the data and distribute it to the observers. It won't calculate the value until an active observer is added.
+                // i.e it won't run the query and initialize alarms until an active observer is added
+                // Only call alarms.observeForever when alarms.value is equal to null
 
-                                googleMap.addMarker(
-                                    ENTER_MARKER_OPTIONS
-                                        .position(alarm.location)
-                                        .title(alarm.name)
-                                        .snippet(
-                                            "Lat: %.4f Long: %.4f".format(
-                                                alarm.location.latitude,
-                                                alarm.location.longitude
+                if (alarms.value == null) {
+                    alarms.observeForever {
+                        it.lastOrNull()?.let { alarm ->
+                            Log.d("MapViewContainer", "observeForever : alarms list changed")
+                            if (alarm.is_active) {
+                                if (alarm.type == AlarmType.ON_ENTRY) {
+                                    googleMap.addMarker(
+                                        ENTER_MARKER_OPTIONS
+                                            .position(alarm.location)
+                                            .title(alarm.name)
+                                            .snippet(
+                                                "Lat: %.4f Long: %.4f".format(
+                                                    alarm.location.latitude,
+                                                    alarm.location.longitude
+                                                )
                                             )
-                                        )
-                                )
+                                    )
 
-                                googleMap.addCircle(
-                                    ENTER_CIRCLE_OPTIONS
-                                        .center(alarm.location)
-                                        .radius(alarm.radius.toDouble())
-                                )
+                                    googleMap.addCircle(
+                                        ENTER_CIRCLE_OPTIONS
+                                            .center(alarm.location)
+                                            .radius(alarm.radius.toDouble())
+                                    )
 
-                            } else {
-                                googleMap.addMarker(
-                                    EXIT_MARKER_OPTIONS
-                                        .position(alarm.location)
-                                        .title(alarm.name)
-                                        .snippet(
-                                            "Lat: %.4f Long: %.4f".format(
-                                                alarm.location.latitude,
-                                                alarm.location.longitude
+                                } else {
+                                    googleMap.addMarker(
+                                        EXIT_MARKER_OPTIONS
+                                            .position(alarm.location)
+                                            .title(alarm.name)
+                                            .snippet(
+                                                "Lat: %.4f Long: %.4f".format(
+                                                    alarm.location.latitude,
+                                                    alarm.location.longitude
+                                                )
                                             )
-                                        )
-                                )
+                                    )
 
-                                googleMap.addCircle(
-                                    EXIT_CIRCLE_OPTIONS
-                                        .center(alarm.location)
-                                        .radius(alarm.radius.toDouble())
-                                )
+                                    googleMap.addCircle(
+                                        EXIT_CIRCLE_OPTIONS
+                                            .center(alarm.location)
+                                            .radius(alarm.radius.toDouble())
+                                    )
+                                }
                             }
                         }
                     }
                 }
-
-                // FIXME: after exiting and reopening app, none of the markers are visible.
-                // TODO: Change lifecycle methods to toggle isMapInitialized to false when map is destroyed
                 MapInitializer(googleMap, permissionsGranted)
 
             }
@@ -181,7 +185,7 @@ fun MarkerSaveMenu(mapViewModel: MapScreenViewModel) {
             .fillMaxSize()
     ) {
 
-        Row() {
+        Row {
 
             IconButton(onClick = { mapViewModel.onMoveMarker(null, null) }) {
                 Icon(Icons.Default.Close, contentDescription = "Cancel")
@@ -202,7 +206,7 @@ fun MarkerSaveMenu(mapViewModel: MapScreenViewModel) {
             }
         }
 
-        Text("Radius : ${areaRadius} m")
+        Text("Radius : $areaRadius m")
         Slider(value = sliderValue, onValueChange = { mapViewModel.onChangeSlider(it) })
 
         Row {
@@ -297,6 +301,5 @@ fun MainMapScreen(
     }
 }
 
-// TODO : fix map double marker add bug
 // TODO : design UI to display alarms
-// TODO : add alarm features
+// TODO : use geofencing API to add alarm features

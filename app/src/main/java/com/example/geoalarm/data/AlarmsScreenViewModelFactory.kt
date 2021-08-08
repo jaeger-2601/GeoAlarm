@@ -1,6 +1,5 @@
-package com.example.geoalarm
+package com.example.geoalarm.data
 
-import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.geoalarm.data.room.AlarmsDao

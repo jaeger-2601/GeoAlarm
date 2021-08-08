@@ -1,11 +1,7 @@
-package com.example.geoalarm
+package com.example.geoalarm.data
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.geoalarm.data.Alarm
 import com.example.geoalarm.data.room.AlarmsDao
 import kotlinx.coroutines.launch
 
