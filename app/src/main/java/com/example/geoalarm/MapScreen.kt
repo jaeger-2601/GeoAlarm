@@ -1,6 +1,12 @@
 package com.example.geoalarm
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.app.PendingIntent
+import android.content.Context
+import android.content.pm.PackageManager
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
@@ -24,11 +30,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.LiveData
 import androidx.navigation.NavController
 import com.example.geoalarm.data.Alarm
 import com.example.geoalarm.data.AlarmType
 import com.example.geoalarm.data.MapScreenViewModel
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.location.Geofence
+import com.google.android.gms.location.GeofenceStatusCodes
+import com.google.android.gms.location.GeofencingClient
+import com.google.android.gms.location.GeofencingRequest
 import com.google.android.libraries.maps.GoogleMap
 import com.google.android.libraries.maps.MapView
 import com.google.android.libraries.maps.model.Circle
@@ -38,6 +50,102 @@ import com.google.maps.android.ktx.awaitMap
 import kotlinx.coroutines.launch
 
 
+/*
+
+*/
+
+object GeofenceErrorMessages {
+    fun getErrorString(context: Context, e: Exception): String {
+        return if (e is ApiException) {
+            getErrorString(context, e.statusCode)
+        } else {
+            context.resources.getString(R.string.geofence_unknown_error)
+        }
+    }
+
+    fun getErrorString(context: Context, errorCode: Int): String {
+        val resources = context.resources
+        return when (errorCode) {
+            GeofenceStatusCodes.GEOFENCE_NOT_AVAILABLE ->
+                resources.getString(R.string.geofence_not_available)
+
+            GeofenceStatusCodes.GEOFENCE_TOO_MANY_GEOFENCES ->
+                resources.getString(R.string.geofence_too_many_geofences)
+
+            GeofenceStatusCodes.GEOFENCE_TOO_MANY_PENDING_INTENTS ->
+                resources.getString(R.string.geofence_too_many_pending_intents)
+
+            else -> resources.getString(R.string.geofence_unknown_error)
+        }
+    }
+}
+
+
+fun getGeofencingRequest(geofence: Geofence): GeofencingRequest {
+
+    return GeofencingRequest.Builder().apply {
+
+        setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
+        addGeofence(geofence)
+
+    }.build()
+}
+
+private fun buildGeofence(alarm: Alarm): Geofence? {
+
+
+    return Geofence.Builder()
+        .setRequestId(alarm.id.toString())
+        .setCircularRegion(
+            alarm.location.latitude,
+            alarm.location.longitude,
+            alarm.radius.toFloat()
+        )
+        .setTransitionTypes(if (alarm.type == AlarmType.ON_ENTRY) Geofence.GEOFENCE_TRANSITION_ENTER else Geofence.GEOFENCE_TRANSITION_EXIT )
+        .setExpirationDuration(Geofence.NEVER_EXPIRE)
+        .build()
+
+
+}
+
+private fun buildGeofencingRequest(geofence: Geofence): GeofencingRequest {
+    return GeofencingRequest.Builder()
+        .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
+        .addGeofences(listOf(geofence))
+        .build()
+}
+
+@SuppressLint("MissingPermission")
+fun addGeofence(
+    geofencingClient: GeofencingClient,
+    geofencePendingIntent: PendingIntent,
+    alarm: Alarm,
+    context: Context,
+    success: () -> Unit,
+    failure: (error: String) -> Unit) {
+    // 1
+    val geofence = buildGeofence(alarm)
+    if (geofence != null
+        && ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+        // 2
+        geofencingClient
+            .addGeofences(buildGeofencingRequest(geofence), geofencePendingIntent)
+            // 3
+            .addOnSuccessListener {
+                //saveAll(getAll() + reminder)
+                success()
+            }
+            // 4
+            .addOnFailureListener {
+                failure(GeofenceErrorMessages.getErrorString(context, it))
+            }
+    }
+}
+
+
+@SuppressLint("MissingPermission")
 @Composable
 fun MapViewContainer(
     map: MapView,
@@ -47,10 +155,13 @@ fun MapViewContainer(
     permissionsGranted: Boolean,
     currentCircleSize: () -> Double,
     MoveMarker: (Marker?, Circle?) -> Unit,
+    geofencingClient: GeofencingClient,
+    geofencePendingIntent: PendingIntent
 ) {
 
     val coroutineScope = rememberCoroutineScope()
     val isMapInit by isMapInitialized.observeAsState(false)
+    val context = LocalContext.current
 
     AndroidView({ map }) { mapView ->
 
@@ -83,12 +194,22 @@ fun MapViewContainer(
                                                 )
                                             )
                                     )
+                                    addGeofence(
+                                        geofencingClient,
+                                        geofencePendingIntent,
+                                        alarm,
+                                        context,
+                                        success = { Log.i("MapViewContainer", "Geofence added successfully") },
+                                        failure = { Log.i("MapViewContainer", "Geofence addition failed") }
+                                    )
 
                                     googleMap.addCircle(
                                         ENTER_CIRCLE_OPTIONS
                                             .center(alarm.location)
                                             .radius(alarm.radius.toDouble())
                                     )
+
+                                   // geofencingClient?.addGeofences()
 
                                 } else {
                                     googleMap.addMarker(
@@ -241,6 +362,8 @@ fun MarkerSaveMenu(mapViewModel: MapScreenViewModel) {
 fun MainMapScreen(
     navController: NavController,
     permissionsGranted: Boolean,
+    geofencingClient: GeofencingClient,
+    geofencePendingIntent: PendingIntent,
     mapViewModel: MapScreenViewModel
 ) {
 
@@ -277,7 +400,9 @@ fun MainMapScreen(
                     MapInitializer = { mMap, permissions -> mapViewModel.MapInitializer(mMap, permissions) },
                     permissionsGranted = permissionsGranted,
                     currentCircleSize = { (areaRadius ?: 0).toDouble() },
-                    MoveMarker = { m: Marker?, c: Circle? -> mapViewModel.onMoveMarker(m, c) }
+                    MoveMarker = { m: Marker?, c: Circle? -> mapViewModel.onMoveMarker(m, c) },
+                    geofencingClient = geofencingClient,
+                    geofencePendingIntent = geofencePendingIntent
                 )
             }
 
@@ -303,3 +428,4 @@ fun MainMapScreen(
 
 // TODO : design UI to display alarms
 // TODO : use geofencing API to add alarm features
+

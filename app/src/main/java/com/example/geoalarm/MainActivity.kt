@@ -29,14 +29,16 @@ class MainActivity : ComponentActivity() {
     lateinit var geofencingClient: GeofencingClient
     private val geofencePendingIntent: PendingIntent by lazy {
         val intent = Intent(this, GeoFenceBroadcastReceiver::class.java)
+
         // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when calling
         // addGeofences() and removeGeofences().
+
         PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
     @ExperimentalAnimationApi
     @Composable
-    fun NavScreens(permissionGranted: Boolean, viewModels: Map<String, ViewModel>){
+    fun NavScreens(permissionGranted: Boolean, viewModels: Map<String, ViewModel>, geofencingClient: GeofencingClient, geofencePendingIntent: PendingIntent){
 
         val navController = rememberNavController()
 
@@ -45,6 +47,8 @@ class MainActivity : ComponentActivity() {
                 MainMapScreen(
                     navController,
                     permissionGranted,
+                    geofencingClient,
+                    geofencePendingIntent,
                     viewModels["MapScreen"] as MapScreenViewModel
                 )
             }
@@ -105,7 +109,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             NavScreens(
                 permissionsGranted,
-                viewModels
+                viewModels,
+                geofencingClient,
+                geofencePendingIntent
             )
         }
     }

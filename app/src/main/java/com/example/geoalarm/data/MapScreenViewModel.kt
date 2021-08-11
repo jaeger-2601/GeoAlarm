@@ -47,7 +47,6 @@ class MapScreenViewModel(
         sliderPosition.value?.times(1000)?.toInt()
     }
 
-
     val alarms = database.getAllAlarms()
 
 
@@ -60,7 +59,7 @@ class MapScreenViewModel(
 
     fun onChangeSlider(num: Float) {
         _sliderPosition.value = num
-        lastCircle.value?.radius = areaRadius.value?.toDouble() ?: 0.0
+        (areaRadius.value?.toDouble() ?: 0.0).also { lastCircle.value?.radius = it }
     }
 
     fun onAlarmNameChange(name: String) {
@@ -129,7 +128,8 @@ class MapScreenViewModel(
                                 .radius(alarm.radius.toDouble())
                         )
 
-                    } else {
+                    }
+                    else {
                         googleMap.addMarker(
                             EXIT_MARKER_OPTIONS
                                 .position(alarm.location)
@@ -160,6 +160,5 @@ class MapScreenViewModel(
     fun onMapDestroyed(){
         _isMapInitialized.value = false
     }
-
 
 }
