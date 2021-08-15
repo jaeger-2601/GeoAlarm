@@ -50,10 +50,6 @@ import com.google.maps.android.ktx.awaitMap
 import kotlinx.coroutines.launch
 
 
-/*
-
-*/
-
 object GeofenceErrorMessages {
     fun getErrorString(context: Context, e: Exception): String {
         return if (e is ApiException) {
@@ -426,6 +422,6 @@ fun MainMapScreen(
     }
 }
 
-// TODO : design UI to display alarms
+// TODO : display a notification, vibrate, emit sound a
 // TODO : use geofencing API to add alarm features
 

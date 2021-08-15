@@ -20,6 +20,7 @@ fun diffMarkers(a1: List<Alarm>, a2: List<Alarm>): List<DiffedElement> {
     var row_sums: MutableList<Int> = mutableListOf()
     var col_sums: MutableList<Int> = mutableListOf()
     var diff_list: MutableList<DiffedElement> = mutableListOf()
+
     var sum = 0;
     var i = 0;
     var j = 0;

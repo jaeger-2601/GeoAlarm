@@ -1,9 +1,14 @@
 package com.example.geoalarm
 
 import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.RingtoneManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -22,9 +27,15 @@ import com.example.geoalarm.data.MapScreenViewModelFactory
 import com.example.geoalarm.data.room.GeoAlarmDatabase
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.LocationServices
+import android.media.AudioAttributes
+
+import android.R
+import android.net.Uri
 
 
 class MainActivity : ComponentActivity() {
+
+    private val CHANNEL_ID = "GeoAlarm"
 
     lateinit var geofencingClient: GeofencingClient
     private val geofencePendingIntent: PendingIntent by lazy {
@@ -62,7 +73,34 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    @ExperimentalAnimationApi
+    private fun createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
+            val soundUri: Uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+
+            val audioAttributes = AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .setUsage(AudioAttributes.USAGE_ALARM)
+                .build()
+
+
+            val channel = NotificationChannel(CHANNEL_ID, "GeoAlarm", NotificationManager.IMPORTANCE_HIGH).apply {
+                description = "Notification channel for GeoAlarm"
+                this.setSound(soundUri, audioAttributes)
+                this.enableVibration(true)
+            }
+            // Register the channel with the system
+            val notificationManager: NotificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
+
+            @ExperimentalAnimationApi
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
@@ -105,6 +143,8 @@ class MainActivity : ComponentActivity() {
         }
 
         geofencingClient = LocationServices.getGeofencingClient(this)
+
+        createNotificationChannel()
 
         setContent {
             NavScreens(
