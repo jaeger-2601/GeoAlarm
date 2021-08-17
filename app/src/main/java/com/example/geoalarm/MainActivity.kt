@@ -31,6 +31,7 @@ import android.media.AudioAttributes
 
 import android.R
 import android.net.Uri
+import android.util.Log
 
 
 class MainActivity : ComponentActivity() {
@@ -66,6 +67,7 @@ class MainActivity : ComponentActivity() {
 
             composable("alarms") {
                 AlarmScreen(
+                    navController,
                     viewModels["AlarmScreen"] as AlarmsScreenViewModel
                 )
             }
@@ -128,19 +130,30 @@ class MainActivity : ComponentActivity() {
             ) != PackageManager.PERMISSION_GRANTED
         ) {
 
-            val permissions= arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+            val permissions= arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
             ActivityCompat.requestPermissions(this, permissions, 4564564)
 
             if (ActivityCompat.checkSelfPermission(
                     applicationContext,
                     Manifest.permission.ACCESS_FINE_LOCATION
                 ) == PackageManager.PERMISSION_GRANTED) {
-                permissionsGranted = true
+                if (ActivityCompat.checkSelfPermission(
+                        applicationContext,
+                        Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                    ) == PackageManager.PERMISSION_GRANTED){
+                    permissionsGranted = true
+                }
             }
         }
         else {
-            permissionsGranted = true
+            permissionsGranted = ActivityCompat.checkSelfPermission(
+                applicationContext,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
         }
+
+       if (!permissionsGranted) Log.e("MainActivity", "Permissions not granted!")
 
         geofencingClient = LocationServices.getGeofencingClient(this)
 

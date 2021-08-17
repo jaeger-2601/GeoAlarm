@@ -16,6 +16,7 @@ import com.google.android.libraries.maps.MapView
 /**
  * Remembers a MapView and gives it the lifecycle of the current LifecycleOwner
  */
+
 @Composable
 fun rememberMapViewWithLifecycle(onMapDestroy: () -> Unit): MapView {
     val context = LocalContext.current
@@ -41,18 +42,22 @@ fun rememberMapViewWithLifecycle(onMapDestroy: () -> Unit): MapView {
 private fun getMapLifecycleObserver(mapView: MapView, onMapDestroy: () -> Unit): LifecycleEventObserver =
     LifecycleEventObserver { _, event ->
         when (event) {
-            Lifecycle.Event.ON_CREATE -> mapView.onCreate(Bundle())
-            Lifecycle.Event.ON_START -> mapView.onStart()
-            Lifecycle.Event.ON_RESUME -> mapView.onResume()
-            Lifecycle.Event.ON_PAUSE -> mapView.onPause()
-            Lifecycle.Event.ON_STOP -> mapView.onStop()
-            Lifecycle.Event.ON_DESTROY -> onDestroy(mapView, onMapDestroy)
+            Lifecycle.Event.ON_CREATE -> { Log.i("getMapLifecycleObserver", "onCreate"); mapView.onCreate(Bundle()) }
+            Lifecycle.Event.ON_START -> { Log.i("getMapLifecycleObserver", "onStart"); mapView.onStart() }
+            Lifecycle.Event.ON_RESUME -> { Log.i("getMapLifecycleObserver", "onResume"); mapView.onResume() }
+            Lifecycle.Event.ON_PAUSE -> { Log.i("getMapLifecycleObserver", "onPause"); mapView.onPause() }
+            Lifecycle.Event.ON_STOP -> { Log.i("getMapLifecycleObserver", "onStop"); onMapDestroy();  mapView.onStop() }
+            Lifecycle.Event.ON_DESTROY -> {
+                Log.i("getMapLifecycleObserver", "MapView destroyed")
+                onMapDestroy()
+                mapView.onDestroy()
+            }
             else -> throw IllegalStateException()
         }
     }
 
 fun onDestroy(mapView: MapView, onMapDestroy: () -> Unit){
-    Log.d("onDestroy", "MapView destroyed")
+    Log.i("onDestroy", "MapView destroyed")
     onMapDestroy()
     mapView.onDestroy()
 }

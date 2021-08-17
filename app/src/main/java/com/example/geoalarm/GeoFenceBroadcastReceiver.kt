@@ -84,6 +84,10 @@ class GeoFenceBroadcastReceiver : BroadcastReceiver() {
         val alarm =  get(dataSource, geofence.requestId.toInt())
 
         val fullScreenIntent = Intent(context, AlarmActivity::class.java)
+
+        fullScreenIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        fullScreenIntent.addFlags( Intent.FLAG_ACTIVITY_CLEAR_TOP)
+
         val fullScreenPendingIntent = PendingIntent.getActivity(context, 0,
             fullScreenIntent, PendingIntent.FLAG_UPDATE_CURRENT)
 
@@ -112,7 +116,6 @@ class GeoFenceBroadcastReceiver : BroadcastReceiver() {
                     // interacts with the notification. Also, if your app targets Android 10
                     // or higher, you need to request the USE_FULL_SCREEN_INTENT permission in
                     // order for the platform to invoke this notification.
-                    //.setFullScreenIntent(fullScreenPendingIntent, true)
             }
 
         return notificationBuilder?.build()

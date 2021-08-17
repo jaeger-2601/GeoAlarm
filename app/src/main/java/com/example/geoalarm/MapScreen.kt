@@ -118,7 +118,7 @@ fun addGeofence(
     alarm: Alarm,
     context: Context,
     success: () -> Unit,
-    failure: (error: String) -> Unit) {
+    failure: (error: String, exception: Exception) -> Unit) {
     // 1
     val geofence = buildGeofence(alarm)
     if (geofence != null
@@ -135,7 +135,7 @@ fun addGeofence(
             }
             // 4
             .addOnFailureListener {
-                failure(GeofenceErrorMessages.getErrorString(context, it))
+                failure(GeofenceErrorMessages.getErrorString(context, it), it)
             }
     }
 }
@@ -147,12 +147,11 @@ fun MapViewContainer(
     map: MapView,
     alarms : LiveData<List<Alarm>>,
     MapInitializer: (GoogleMap, Boolean) -> Unit,
+    MapUpdate: (GoogleMap) -> Unit,
     isMapInitialized: LiveData<Boolean>,
     permissionsGranted: Boolean,
     currentCircleSize: () -> Double,
     MoveMarker: (Marker?, Circle?) -> Unit,
-    geofencingClient: GeofencingClient,
-    geofencePendingIntent: PendingIntent
 ) {
 
     val coroutineScope = rememberCoroutineScope()
@@ -174,60 +173,12 @@ fun MapViewContainer(
                 // Only call alarms.observeForever when alarms.value is equal to null
 
                 if (alarms.value == null) {
+                    Log.i("MapViewContainer", "Observing alarms")
                     alarms.observeForever {
-                        it.lastOrNull()?.let { alarm ->
-                            Log.d("MapViewContainer", "observeForever : alarms list changed")
-                            if (alarm.is_active) {
-                                if (alarm.type == AlarmType.ON_ENTRY) {
-                                    googleMap.addMarker(
-                                        ENTER_MARKER_OPTIONS
-                                            .position(alarm.location)
-                                            .title(alarm.name)
-                                            .snippet(
-                                                "Lat: %.4f Long: %.4f".format(
-                                                    alarm.location.latitude,
-                                                    alarm.location.longitude
-                                                )
-                                            )
-                                    )
-                                    addGeofence(
-                                        geofencingClient,
-                                        geofencePendingIntent,
-                                        alarm,
-                                        context,
-                                        success = { Log.i("MapViewContainer", "Geofence added successfully") },
-                                        failure = { Log.i("MapViewContainer", "Geofence addition failed") }
-                                    )
 
-                                    googleMap.addCircle(
-                                        ENTER_CIRCLE_OPTIONS
-                                            .center(alarm.location)
-                                            .radius(alarm.radius.toDouble())
-                                    )
+                        Log.d("MapViewContainer", "observeForever : alarms list changed")
+                        MapUpdate(googleMap)
 
-                                   // geofencingClient?.addGeofences()
-
-                                } else {
-                                    googleMap.addMarker(
-                                        EXIT_MARKER_OPTIONS
-                                            .position(alarm.location)
-                                            .title(alarm.name)
-                                            .snippet(
-                                                "Lat: %.4f Long: %.4f".format(
-                                                    alarm.location.latitude,
-                                                    alarm.location.longitude
-                                                )
-                                            )
-                                    )
-
-                                    googleMap.addCircle(
-                                        EXIT_CIRCLE_OPTIONS
-                                            .center(alarm.location)
-                                            .radius(alarm.radius.toDouble())
-                                    )
-                                }
-                            }
-                        }
                     }
                 }
                 MapInitializer(googleMap, permissionsGranted)
@@ -390,15 +341,14 @@ fun MainMapScreen(
 
             Box {
                 MapViewContainer(
-                    map = rememberMapViewWithLifecycle { mapViewModel.onMapDestroyed() },
+                    map = rememberMapViewWithLifecycle ({ mapViewModel.onMapDestroyed() }),
                     alarms = mapViewModel.alarms,
                     isMapInitialized = mapViewModel.isMapInitialized,
                     MapInitializer = { mMap, permissions -> mapViewModel.MapInitializer(mMap, permissions) },
+                    MapUpdate = { mapViewModel.MapUpdate(it) },
                     permissionsGranted = permissionsGranted,
                     currentCircleSize = { (areaRadius ?: 0).toDouble() },
                     MoveMarker = { m: Marker?, c: Circle? -> mapViewModel.onMoveMarker(m, c) },
-                    geofencingClient = geofencingClient,
-                    geofencePendingIntent = geofencePendingIntent
                 )
             }
 
