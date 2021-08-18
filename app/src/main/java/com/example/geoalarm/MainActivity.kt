@@ -32,6 +32,7 @@ import android.media.AudioAttributes
 import android.R
 import android.net.Uri
 import android.util.Log
+import kotlinx.coroutines.runBlocking
 
 
 class MainActivity : ComponentActivity() {
@@ -76,8 +77,10 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun createNotificationChannel() {
+
         // Create the NotificationChannel, but only on API 26+ because
         // the NotificationChannel class is new and not in the support library
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 
             val soundUri: Uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)

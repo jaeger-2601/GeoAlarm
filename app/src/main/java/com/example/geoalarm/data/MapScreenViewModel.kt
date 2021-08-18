@@ -55,6 +55,7 @@ class MapScreenViewModel(
     private var googleMapCircles = mutableListOf<Circle>()
 
 
+
     fun onMoveMarker(marker: Marker?, circle: Circle?) {
         lastMarker.value?.remove()
         lastCircle.value?.remove()
@@ -77,22 +78,28 @@ class MapScreenViewModel(
 
     fun addAlarm(
         is_active: Boolean,
-    ) {
+    ): Alarm? {
+
+
 
         lastMarker.value?.let{
+
+            val alarm = Alarm(
+                name = alarmName.value!!,
+                location = it.position,
+                radius = areaRadius.value ?: 1,
+                type = alarmType.value!!,
+                is_active = is_active,
+                created_at = Date()
+            )
             viewModelScope.launch {
-                database.insert(
-                    Alarm(
-                        name = alarmName.value!!,
-                        location = it.position,
-                        radius = areaRadius.value ?: 1,
-                        type = alarmType.value!!,
-                        is_active = is_active,
-                        created_at = Date()
-                    )
-                )
+                database.insert(alarm)
             }
+
+            return alarm
         }
+
+        return null
     }
 
     @SuppressLint("MissingPermission", "LongLogTag")

@@ -42,11 +42,27 @@ fun rememberMapViewWithLifecycle(onMapDestroy: () -> Unit): MapView {
 private fun getMapLifecycleObserver(mapView: MapView, onMapDestroy: () -> Unit): LifecycleEventObserver =
     LifecycleEventObserver { _, event ->
         when (event) {
-            Lifecycle.Event.ON_CREATE -> { Log.i("getMapLifecycleObserver", "onCreate"); mapView.onCreate(Bundle()) }
-            Lifecycle.Event.ON_START -> { Log.i("getMapLifecycleObserver", "onStart"); mapView.onStart() }
-            Lifecycle.Event.ON_RESUME -> { Log.i("getMapLifecycleObserver", "onResume"); mapView.onResume() }
-            Lifecycle.Event.ON_PAUSE -> { Log.i("getMapLifecycleObserver", "onPause"); mapView.onPause() }
-            Lifecycle.Event.ON_STOP -> { Log.i("getMapLifecycleObserver", "onStop"); onMapDestroy();  mapView.onStop() }
+            Lifecycle.Event.ON_CREATE -> {
+                Log.i("getMapLifecycleObserver", "onCreate")
+                mapView.onCreate(Bundle())
+            }
+            Lifecycle.Event.ON_START -> {
+                Log.i("getMapLifecycleObserver", "onStart");
+                mapView.onStart()
+            }
+            Lifecycle.Event.ON_RESUME -> {
+                Log.i("getMapLifecycleObserver", "onResume");
+                mapView.onResume()
+            }
+            Lifecycle.Event.ON_PAUSE -> {
+                Log.i("getMapLifecycleObserver", "onPause")
+                onMapDestroy()
+                mapView.onPause()
+            }
+            Lifecycle.Event.ON_STOP -> {
+                Log.i("getMapLifecycleObserver", "onStop")
+                mapView.onStop()
+            }
             Lifecycle.Event.ON_DESTROY -> {
                 Log.i("getMapLifecycleObserver", "MapView destroyed")
                 onMapDestroy()
@@ -56,11 +72,7 @@ private fun getMapLifecycleObserver(mapView: MapView, onMapDestroy: () -> Unit):
         }
     }
 
-fun onDestroy(mapView: MapView, onMapDestroy: () -> Unit){
-    Log.i("onDestroy", "MapView destroyed")
-    onMapDestroy()
-    mapView.onDestroy()
-}
+
 
 
 

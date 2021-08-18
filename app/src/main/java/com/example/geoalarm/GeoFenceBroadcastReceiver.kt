@@ -21,12 +21,14 @@ import android.net.Uri
 
 import android.media.Ringtone
 import android.os.Build
+import androidx.annotation.RequiresApi
 
 
 const val TAG = "GeoFenceBroadcastReceiver"
 
 class GeoFenceBroadcastReceiver : BroadcastReceiver() {
     // ...
+
     @SuppressLint("LongLogTag")
     override fun onReceive(context: Context, intent: Intent?) {
 
@@ -40,6 +42,15 @@ class GeoFenceBroadcastReceiver : BroadcastReceiver() {
             return
         }
 
+
+        val fullScreenIntent = Intent(context, AlarmActivity::class.java)
+
+        fullScreenIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        fullScreenIntent.addFlags( Intent.FLAG_ACTIVITY_CLEAR_TOP)
+
+        val fullScreenPendingIntent = PendingIntent.getActivity(context, 0,
+            fullScreenIntent, PendingIntent.FLAG_UPDATE_CURRENT)
+
         // Get the transition type.
         val geofenceTransition = geofencingEvent.geofenceTransition
 
@@ -48,7 +59,7 @@ class GeoFenceBroadcastReceiver : BroadcastReceiver() {
         geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT) {
 
             //build and send notification
-            buildNotification(context, geofencingEvent, dataSource)?.let {
+            buildNotification(context, geofencingEvent, fullScreenPendingIntent, dataSource)?.let {
 
                 with(NotificationManagerCompat.from(context)){
 
@@ -60,8 +71,10 @@ class GeoFenceBroadcastReceiver : BroadcastReceiver() {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                         r.isLooping = false
                     }
-                    r.play()
+                }
 
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context?.startForegroundService(fullScreenIntent)
                 }
             }
 
@@ -74,22 +87,11 @@ class GeoFenceBroadcastReceiver : BroadcastReceiver() {
 
 
 
-    fun buildNotification(context: Context?, geofencingEvent: GeofencingEvent, dataSource: AlarmsDao): Notification? {
-
-        //val fullScreenIntent = Intent(context, CallActivity::class.java)
-        //val fullScreenPendingIntent = PendingIntent.getActivity(context, 0,
-        //    fullScreenIntent, PendingIntent.FLAG_UPDATE_CURRENT)
+    fun buildNotification(context: Context?, geofencingEvent: GeofencingEvent, fullScreenPendingIntent:PendingIntent, dataSource: AlarmsDao): Notification? {
 
         val geofence = geofencingEvent.triggeringGeofences[0]
         val alarm =  get(dataSource, geofence.requestId.toInt())
 
-        val fullScreenIntent = Intent(context, AlarmActivity::class.java)
-
-        fullScreenIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        fullScreenIntent.addFlags( Intent.FLAG_ACTIVITY_CLEAR_TOP)
-
-        val fullScreenPendingIntent = PendingIntent.getActivity(context, 0,
-            fullScreenIntent, PendingIntent.FLAG_UPDATE_CURRENT)
 
         val alarmSound: Uri =
             RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
