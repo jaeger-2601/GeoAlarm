@@ -14,11 +14,12 @@ import com.google.android.libraries.maps.model.CircleOptions
 import com.google.android.libraries.maps.model.Marker
 import com.google.android.libraries.maps.model.MarkerOptions
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.util.*
 
 
 class MapScreenViewModel(
-    val database: AlarmsDao
+    private val database: AlarmsDao
 ) : ViewModel() {
 
     private val _lastMarker = MutableLiveData<Marker?>(null)
@@ -96,42 +97,38 @@ class MapScreenViewModel(
                 database.insert(alarm)
             }
 
-            return alarm
+            return runBlocking { database.get(alarm.location) }
         }
 
         return null
     }
 
     @SuppressLint("MissingPermission", "LongLogTag")
-    fun MapInitializer(googleMap: GoogleMap, permissionsGranted: Boolean) {
-
-        var is_present: Boolean
-        var markerOptions: MarkerOptions
-        var circleOptions: CircleOptions
+    fun mapInitializer(googleMap: GoogleMap) {
 
         Log.i("getMapLifecycleObserver-MapInitializer", "Entered MapInitializer")
 
         googleMap.mapType = GoogleMap.MAP_TYPE_TERRAIN
-        googleMap.isMyLocationEnabled = permissionsGranted
+        googleMap.isMyLocationEnabled = true
 
 
         //make sure alarms is not null
         alarms.value?.let {
             Log.i("getMapLifecycleObserver-MapInitializer", "Map Initialized")
-            this.MapUpdate(googleMap)
+            this.mapUpdate(googleMap)
             _isMapInitialized.value = true
         }
 
     }
 
     @SuppressLint("LongLogTag")
-    fun MapUpdate(googleMap: GoogleMap){
+    fun mapUpdate(googleMap: GoogleMap){
 
         // Update google maps with the creation and deletion of markers
 
-        var is_present: Boolean
+        var isPresent: Boolean
         var index: Int
-        var changed_markers = mutableListOf<Marker>()
+        val changedMarkers = mutableListOf<Marker>()
         var markerOptions: MarkerOptions
         var circleOptions: CircleOptions
         val activeAlarms = alarms.value!!.filter { it.is_active }
@@ -144,18 +141,18 @@ class MapScreenViewModel(
 
             for (marker in googleMapMarkers) {
 
-                is_present = false
+                isPresent = false
 
                 for(alarm in activeAlarms){
                     if (marker.position == alarm.location)
-                        is_present = true
+                        isPresent = true
                 }
 
-                if (!is_present)
-                    changed_markers.add(marker)
+                if (!isPresent)
+                    changedMarkers.add(marker)
             }
 
-            for (marker in changed_markers){
+            for (marker in changedMarkers){
                 index = googleMapMarkers.lastIndexOf(marker)
                 googleMapMarkers.removeAt(index)
                 googleMapCircles.removeAt(index)
@@ -166,14 +163,14 @@ class MapScreenViewModel(
         else if (googleMapMarkers.size < alarms.value!!.size){
 
             for (alarm in activeAlarms){
-                is_present = false
+                isPresent = false
 
                 for(marker in googleMapMarkers){
                     if (marker.position == alarm.location)
-                            is_present = true
+                            isPresent = true
                 }
 
-                if (!is_present){
+                if (!isPresent){
 
 
                     if (alarm.type == AlarmType.ON_ENTRY){

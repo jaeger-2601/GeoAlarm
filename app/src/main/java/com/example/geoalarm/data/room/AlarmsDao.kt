@@ -3,12 +3,16 @@ package com.example.geoalarm.data.room
 import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.example.geoalarm.data.Alarm
+import com.google.android.libraries.maps.model.LatLng
 
 @Dao
 interface AlarmsDao {
 
     @Query("SELECT * FROM alarms WHERE id = :id")
     suspend fun get(id: Int): Alarm?
+
+    @Query("SELECT * FROM alarms WHERE location = :location")
+    suspend fun get(location: LatLng): Alarm?
 
     @Query("SELECT * FROM alarms")
     fun getAllAlarms(): LiveData<List<Alarm>>

@@ -87,6 +87,7 @@ class GeoFenceBroadcastReceiver : BroadcastReceiver() {
 
 
 
+    @SuppressLint("LongLogTag")
     fun buildNotification(context: Context?, geofencingEvent: GeofencingEvent, fullScreenPendingIntent:PendingIntent, dataSource: AlarmsDao): Notification? {
 
         val geofence = geofencingEvent.triggeringGeofences[0]

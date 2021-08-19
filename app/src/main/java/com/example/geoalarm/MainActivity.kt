@@ -32,6 +32,7 @@ import android.media.AudioAttributes
 import android.R
 import android.net.Uri
 import android.util.Log
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import kotlinx.coroutines.runBlocking
 
 
@@ -49,9 +50,10 @@ class MainActivity : ComponentActivity() {
         PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
+    @ExperimentalPermissionsApi
     @ExperimentalAnimationApi
     @Composable
-    fun NavScreens(permissionGranted: Boolean, viewModels: Map<String, ViewModel>, geofencingClient: GeofencingClient, geofencePendingIntent: PendingIntent){
+    fun NavScreens(viewModels: Map<String, ViewModel>, geofencingClient: GeofencingClient, geofencePendingIntent: PendingIntent){
 
         val navController = rememberNavController()
 
@@ -59,7 +61,6 @@ class MainActivity : ComponentActivity() {
             composable("map") {
                 MainMapScreen(
                     navController,
-                    permissionGranted,
                     geofencingClient,
                     geofencePendingIntent,
                     viewModels["MapScreen"] as MapScreenViewModel
@@ -105,12 +106,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+            @ExperimentalPermissionsApi
             @ExperimentalAnimationApi
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
 
-        var permissionsGranted = false
 
         val dataSource = GeoAlarmDatabase.getInstance(this.application).alarmsDao()
 
@@ -126,45 +127,12 @@ class MainActivity : ComponentActivity() {
             "MapScreen" to mapScreenViewModel
         )
 
-        //Check if permissions are granted
-        if (ActivityCompat.checkSelfPermission(
-                applicationContext,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-
-            val permissions= arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-            ActivityCompat.requestPermissions(this, permissions, 4564564)
-
-            if (ActivityCompat.checkSelfPermission(
-                    applicationContext,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED) {
-                if (ActivityCompat.checkSelfPermission(
-                        applicationContext,
-                        Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                    ) == PackageManager.PERMISSION_GRANTED){
-                    permissionsGranted = true
-                }
-            }
-        }
-        else {
-            permissionsGranted = ActivityCompat.checkSelfPermission(
-                applicationContext,
-                Manifest.permission.ACCESS_BACKGROUND_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-
-        }
-
-       if (!permissionsGranted) Log.e("MainActivity", "Permissions not granted!")
-
         geofencingClient = LocationServices.getGeofencingClient(this)
 
         createNotificationChannel()
 
         setContent {
             NavScreens(
-                permissionsGranted,
                 viewModels,
                 geofencingClient,
                 geofencePendingIntent
