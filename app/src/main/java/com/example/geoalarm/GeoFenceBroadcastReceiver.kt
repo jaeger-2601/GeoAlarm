@@ -6,6 +6,9 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.media.RingtoneManager
+import android.net.Uri
+import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -16,12 +19,6 @@ import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofenceStatusCodes
 import com.google.android.gms.location.GeofencingEvent
 import kotlinx.coroutines.runBlocking
-import android.media.RingtoneManager
-import android.net.Uri
-
-import android.media.Ringtone
-import android.os.Build
-import androidx.annotation.RequiresApi
 
 
 const val TAG = "GeoFenceBroadcastReceiver"
@@ -45,7 +42,7 @@ class GeoFenceBroadcastReceiver : BroadcastReceiver() {
 
         val fullScreenIntent = Intent(context, AlarmActivity::class.java)
 
-        fullScreenIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        fullScreenIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         fullScreenIntent.addFlags( Intent.FLAG_ACTIVITY_CLEAR_TOP)
 
         val fullScreenPendingIntent = PendingIntent.getActivity(context, 0,
@@ -74,7 +71,7 @@ class GeoFenceBroadcastReceiver : BroadcastReceiver() {
                 }
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    context?.startForegroundService(fullScreenIntent)
+                    context.startForegroundService(fullScreenIntent)
                 }
             }
 
@@ -100,12 +97,6 @@ class GeoFenceBroadcastReceiver : BroadcastReceiver() {
         val notificationBuilder =
             context?.let {
                 NotificationCompat.Builder(it, "GeoAlarm")
-                    .setSmallIcon(R.drawable.maps_icon_direction)
-                    .setContentTitle(alarm?.name)
-                    .setContentText("Lat: %.4f Long: %.4f".format(
-                        alarm?.location?.latitude,
-                        alarm?.location?.longitude
-                    ))
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
                     .setSound(alarmSound)
                     .setCategory(NotificationCompat.CATEGORY_ALARM)
@@ -113,6 +104,12 @@ class GeoFenceBroadcastReceiver : BroadcastReceiver() {
                     .setSound(alarmSound)
                     .setContentIntent(fullScreenPendingIntent)
                     .setFullScreenIntent(fullScreenPendingIntent, true)
+                    .setSmallIcon(R.drawable.maps_icon_direction)
+                    .setContentTitle(alarm?.name)
+                    .setContentText("Lat: %.4f Long: %.4f".format(
+                        alarm?.location?.latitude,
+                        alarm?.location?.longitude
+                    ))
 
                     // Use a full-screen intent only for the highest-priority alerts where you
                     // have an associated activity that you would like to launch after the user

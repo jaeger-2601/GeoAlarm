@@ -42,9 +42,7 @@ class MapScreenViewModel(
     val alarmType: LiveData<AlarmType>
         get() = _alarmType
 
-    private val _isMapInitialized = MutableLiveData(false)
-    val isMapInitialized: LiveData<Boolean>
-        get() = _isMapInitialized
+
 
     val areaRadius = Transformations.map(sliderPosition) {
         sliderPosition.value?.times(1000)?.toInt()
@@ -55,6 +53,7 @@ class MapScreenViewModel(
     private var googleMapMarkers = mutableListOf<Marker>()
     private var googleMapCircles = mutableListOf<Circle>()
 
+    private var isMapInitialized = false
 
 
     fun onMoveMarker(marker: Marker?, circle: Circle?) {
@@ -103,25 +102,8 @@ class MapScreenViewModel(
         return null
     }
 
-    @SuppressLint("MissingPermission", "LongLogTag")
-    fun mapInitializer(googleMap: GoogleMap) {
 
-        Log.i("getMapLifecycleObserver-MapInitializer", "Entered MapInitializer")
-
-        googleMap.mapType = GoogleMap.MAP_TYPE_TERRAIN
-        googleMap.isMyLocationEnabled = true
-
-
-        //make sure alarms is not null
-        alarms.value?.let {
-            Log.i("getMapLifecycleObserver-MapInitializer", "Map Initialized")
-            this.mapUpdate(googleMap)
-            _isMapInitialized.value = true
-        }
-
-    }
-
-    @SuppressLint("LongLogTag")
+    @SuppressLint("LongLogTag", "MissingPermission")
     fun mapUpdate(googleMap: GoogleMap){
 
         // Update google maps with the creation and deletion of markers
@@ -133,8 +115,17 @@ class MapScreenViewModel(
         var circleOptions: CircleOptions
         val activeAlarms = alarms.value!!.filter { it.is_active }
 
-        Log.i("getMapLifecycleObserver-before", activeAlarms.size.toString())
-        Log.i("getMapLifecycleObserver-before", googleMapMarkers.size.toString())
+        if (!isMapInitialized) {
+
+            googleMap.mapType = GoogleMap.MAP_TYPE_TERRAIN
+            googleMap.isMyLocationEnabled = true
+
+            googleMap.clear()
+
+            isMapInitialized = true
+        }
+
+        Log.i("mapUpdate", "Updating Map")
 
         // An alarm has been deactivated or deleted
         if (googleMapMarkers.size > activeAlarms.size){
@@ -208,13 +199,10 @@ class MapScreenViewModel(
             }
         }
 
-        Log.i("getMapLifecycleObserver-after", activeAlarms.size.toString())
-        Log.i("getMapLifecycleObserver-after", googleMapMarkers.size.toString())
-
     }
 
     fun onMapDestroyed(){
-        _isMapInitialized.value = false
+        isMapInitialized = false
         googleMapMarkers.clear()
         googleMapCircles.clear()
     }

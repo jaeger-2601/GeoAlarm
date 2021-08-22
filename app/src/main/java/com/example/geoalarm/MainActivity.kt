@@ -1,20 +1,19 @@
 package com.example.geoalarm
 
-import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
+import android.media.AudioAttributes
 import android.media.RingtoneManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.runtime.Composable
-import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.NavHost
@@ -25,22 +24,16 @@ import com.example.geoalarm.data.AlarmsScreenViewModelFactory
 import com.example.geoalarm.data.MapScreenViewModel
 import com.example.geoalarm.data.MapScreenViewModelFactory
 import com.example.geoalarm.data.room.GeoAlarmDatabase
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.LocationServices
-import android.media.AudioAttributes
-
-import android.R
-import android.net.Uri
-import android.util.Log
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import kotlinx.coroutines.runBlocking
 
 
 class MainActivity : ComponentActivity() {
 
     private val CHANNEL_ID = "GeoAlarm"
 
-    lateinit var geofencingClient: GeofencingClient
+    private lateinit var geofencingClient: GeofencingClient
     private val geofencePendingIntent: PendingIntent by lazy {
         val intent = Intent(this, GeoFenceBroadcastReceiver::class.java)
 

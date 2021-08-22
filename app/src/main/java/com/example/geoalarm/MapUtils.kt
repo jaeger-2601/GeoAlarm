@@ -2,7 +2,6 @@ package com.example.geoalarm
 
 import android.os.Bundle
 import android.util.Log
-import androidx.annotation.FloatRange
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
@@ -47,11 +46,12 @@ private fun getMapLifecycleObserver(mapView: MapView, onMapDestroy: () -> Unit):
                 mapView.onCreate(Bundle())
             }
             Lifecycle.Event.ON_START -> {
-                Log.i("getMapLifecycleObserver", "onStart");
+                Log.i("getMapLifecycleObserver", "onStart")
                 mapView.onStart()
             }
             Lifecycle.Event.ON_RESUME -> {
-                Log.i("getMapLifecycleObserver", "onResume");
+                Log.i("getMapLifecycleObserver", "onResume")
+                onMapDestroy()
                 mapView.onResume()
             }
             Lifecycle.Event.ON_PAUSE -> {

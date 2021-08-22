@@ -10,22 +10,30 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.LiveData
@@ -50,17 +58,16 @@ import kotlinx.coroutines.launch
 @Composable
 fun MapViewContainer(
     map: MapView,
-    alarms : LiveData<List<Alarm>>,
-    MapInitializer: (GoogleMap) -> Unit,
-    MapUpdate: (GoogleMap) -> Unit,
-    isMapInitialized: LiveData<Boolean>,
+    alarms: LiveData<List<Alarm>>,
+    mapUpdate: (GoogleMap) -> Unit,
     currentCircleSize: () -> Double,
-    MoveMarker: (Marker?, Circle?) -> Unit,
+    moveMarker: (Marker?, Circle?) -> Unit,
     isLastMarker: (Marker) -> Boolean
 ) {
-
     val coroutineScope = rememberCoroutineScope()
-    val isMapInit by isMapInitialized.observeAsState(false)
+    val gAlarms by alarms.observeAsState()
+
+    Log.i("Screen", "MapViewContainer")
 
     AndroidView({ map }) { mapView ->
 
@@ -69,33 +76,15 @@ fun MapViewContainer(
 
             Log.d("MapViewContainer", "coroutineScope : Map rendered")
 
-            if (!isMapInit) {
 
-                // LiveData is an asynchronous query, you get the LiveData object but it might contain no data.
-                // LiveData is to watch the data and distribute it to the observers. It won't calculate the value until an active observer is added.
-                // i.e it won't run the query and initialize alarms until an active observer is added
-                // Only call alarms.observeForever when alarms.value is equal to null
-
-                if (alarms.value == null) {
-                    Log.i("MapViewContainer", "Observing alarms")
-                    alarms.observeForever {
-
-                        Log.d("MapViewContainer", "observeForever : alarms list changed")
-                        MapUpdate(googleMap)
-
-                    }
-                }
-                MapInitializer(googleMap)
-
-            }
+            mapUpdate(googleMap)
 
             googleMap.setOnMarkerClickListener {
 
                 if (isLastMarker(it)) {
-                    MoveMarker(null, null)
+                    moveMarker(null, null)
                     true
-                }
-                else {
+                } else {
                     it.showInfoWindow()
                     true
                 }
@@ -117,7 +106,7 @@ fun MapViewContainer(
                         .snippet("Lat: %.4f Long: %.4f".format(it.latitude, it.longitude))
                 )
 
-                MoveMarker(marker, circle)
+                moveMarker(marker, circle)
                 marker.showInfoWindow()
 
             }
@@ -144,7 +133,7 @@ fun MapViewContainer(
                         )
                 )
 
-                MoveMarker(poiMarker, circle)
+                moveMarker(poiMarker, circle)
                 poiMarker.showInfoWindow()
             }
         }
@@ -154,7 +143,11 @@ fun MapViewContainer(
 
 @ExperimentalPermissionsApi
 @Composable
-fun MarkerSaveMenu(mapViewModel: MapScreenViewModel, geofencingClient: GeofencingClient, geofencePendingIntent: PendingIntent) {
+fun MarkerSaveMenu(
+    mapViewModel: MapScreenViewModel,
+    geofencingClient: GeofencingClient,
+    geofencePendingIntent: PendingIntent
+) {
 
     val alarmName by mapViewModel.alarmName.observeAsState("")
     val areaRadius by mapViewModel.areaRadius.observeAsState()
@@ -163,26 +156,36 @@ fun MarkerSaveMenu(mapViewModel: MapScreenViewModel, geofencingClient: Geofencin
 
     val context = LocalContext.current
 
-    var doNotShowRationale by rememberSaveable { mutableStateOf(false) }
-    val bgLocationPermissionState = rememberPermissionState(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+    val bgLocationPermissionState =
+        rememberPermissionState(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+
+    Log.i("Screen", "MarkerSaveMenu")
 
     PermissionRequired(
         permissionState = bgLocationPermissionState,
         permissionNotGrantedContent = {
-            if (doNotShowRationale) {
-                Text("Feature not available")
-            } else {
-                Column(modifier = Modifier.clip(RoundedCornerShape(10.dp)).background(Color.White)) {
-                    Text("To set up GeoAlarms, we need access to your location at all times. Please grant the permission.")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row {
-                        Button(onClick = { bgLocationPermissionState.launchPermissionRequest() }) {
-                            Text("Ok!")
-                        }
-                        Spacer(Modifier.width(8.dp))
-                        Button(onClick = { doNotShowRationale = true }) {
-                            Text("Nope")
-                        }
+
+            Column(
+                modifier = Modifier
+                    .background(Color(0xFF131E37))
+                    .padding(20.dp, 20.dp)
+            ) {
+                Text(
+                    "To set up GeoAlarms, we need access to your location at all times. Please grant the permission.",
+                    color = Color.White
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp, 20.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Button(
+                        onClick = { bgLocationPermissionState.launchPermissionRequest() },
+                        colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF3EB38A)),
+                    ) {
+                        Text("Ok!")
                     }
                 }
             }
@@ -196,7 +199,8 @@ fun MarkerSaveMenu(mapViewModel: MapScreenViewModel, geofencingClient: Geofencin
                 Button(onClick = {
 
                     //Navigate to app permissions settings
-                    val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                    val intent =
+                        Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                     val uri: Uri = Uri.fromParts("package", context.packageName, null)
                     intent.data = uri
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -211,8 +215,7 @@ fun MarkerSaveMenu(mapViewModel: MapScreenViewModel, geofencingClient: Geofencin
 
         Column(
             modifier = Modifier
-                .clip(RoundedCornerShape(10.dp))
-                .background(Color.White)
+                .background(Color(0xFF131E37))
                 .wrapContentHeight()
         ) {
 
@@ -220,17 +223,42 @@ fun MarkerSaveMenu(mapViewModel: MapScreenViewModel, geofencingClient: Geofencin
                 value = alarmName,
                 onValueChange = { mapViewModel.onAlarmNameChange(it) },
                 label = { Text("Alarm Name") },
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    textColor = Color.White,
+                    cursorColor = Color.White,
+                    unfocusedBorderColor = Color.LightGray,
+                    unfocusedLabelColor = Color.DarkGray,
+                    focusedBorderColor = Color.LightGray,
+                    focusedLabelColor = Color.LightGray
+                ),
                 modifier = Modifier
                     .padding(20.dp, 10.dp)
                     .fillMaxWidth()
             )
 
+            Text(
+                buildAnnotatedString {
+                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                        append("Radius : ")
+                    }
+                    append("$areaRadius m")
 
-            Text("Radius : $areaRadius m", modifier = Modifier.padding(23.dp, 10.dp, 10.dp, 0.dp))
+                },
+                color = Color.White,
+                modifier = Modifier.padding(23.dp, 10.dp, 10.dp, 0.dp)
+            )
+
             Slider(
                 value = sliderValue,
                 onValueChange = { mapViewModel.onChangeSlider(it) },
-                modifier = Modifier.padding(15.dp, 0.dp, 15.dp, 5.dp)
+                modifier = Modifier.padding(15.dp, 0.dp, 15.dp, 5.dp),
+                colors = SliderDefaults.colors(
+                    thumbColor = Color(0xffbd93f9),
+                    activeTrackColor = Color(
+                        0xffc296ff
+                    ),
+                    inactiveTrackColor = Color(0xFF8b6ab8)
+                )
             )
 
             Row(
@@ -243,7 +271,7 @@ fun MarkerSaveMenu(mapViewModel: MapScreenViewModel, geofencingClient: Geofencin
                     onClick = { mapViewModel.onChangeAlarmType(AlarmType.ON_ENTRY) },
                     modifier = Modifier
                         .background(
-                            if (alarmType == AlarmType.ON_ENTRY) Color(0xFF6200ee) else Color(
+                            if (alarmType == AlarmType.ON_ENTRY) Color(0xFF3EB38A) else Color(
                                 0xFFFFFFFF
                             )
                         )
@@ -261,7 +289,7 @@ fun MarkerSaveMenu(mapViewModel: MapScreenViewModel, geofencingClient: Geofencin
                     onClick = { mapViewModel.onChangeAlarmType(AlarmType.ON_EXIT) },
                     modifier = Modifier
                         .background(
-                            if (alarmType == AlarmType.ON_EXIT) Color(0xFF6200ee) else Color(
+                            if (alarmType == AlarmType.ON_EXIT) Color(0xFF3EB38A) else Color(
                                 0xFFFFFFFF
                             )
                         )
@@ -283,17 +311,22 @@ fun MarkerSaveMenu(mapViewModel: MapScreenViewModel, geofencingClient: Geofencin
             ) {
 
                 IconButton(onClick = { mapViewModel.onMoveMarker(null, null) }) {
-                    Icon(Icons.Default.Close, contentDescription = "Cancel")
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = "Cancel",
+                        tint = Color(0xFFFF5F6E)
+                    )
                 }
 
                 TextButton(onClick = {
                     mapViewModel.addAlarm(false)
                     mapViewModel.onMoveMarker(null, null)
                 }) {
-                    Text("SAVE")
+                    Text("Save", color = Color(0xffc296ff))
                 }
 
                 TextButton(onClick = {
+
                     mapViewModel.addAlarm(true)?.let {
                         addGeofence(
                             geofencingClient,
@@ -301,14 +334,14 @@ fun MarkerSaveMenu(mapViewModel: MapScreenViewModel, geofencingClient: Geofencin
                             it,
                             context,
                             success = { Log.i("MarkerSaveMenu", "Geofence successfully added") },
-                            failure = { error, _-> Log.e("MarkerSaveMenu", error) }
+                            failure = { error, _ -> Log.e("MarkerSaveMenu", error) }
                         )
                     }
 
 
                     mapViewModel.onMoveMarker(null, null)
                 }) {
-                    Text("START")
+                    Text("Start", color = Color(0xFF3EB38A))
                 }
 
             }
@@ -333,48 +366,110 @@ fun MainMapScreen(
     val lastMarker: Marker? by mapViewModel.lastMarker.observeAsState()
     val areaRadius: Int? by mapViewModel.areaRadius.observeAsState()
 
-    var doNotShowRationale by rememberSaveable { mutableStateOf(false) }
-    val locationPermissionState = rememberPermissionState(android.Manifest.permission.ACCESS_FINE_LOCATION)
+    val locationPermissionState =
+        rememberPermissionState(android.Manifest.permission.ACCESS_FINE_LOCATION)
 
+    Log.i("Screen", "MainMapScreen")
 
     PermissionRequired(
         permissionState = locationPermissionState,
         permissionNotGrantedContent = {
-            if (doNotShowRationale) {
-                Text("Feature not available")
-            } else {
-                Column {
-                    Text("To set up GeoAlarms, we need your location. Please grant the permission.")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row {
-                        Button(onClick = { locationPermissionState.launchPermissionRequest() }) {
-                            Text("Ok!")
-                        }
-                        Spacer(Modifier.width(8.dp))
-                        Button(onClick = { doNotShowRationale = true }) {
-                            Text("Nope")
-                        }
+
+            Column(
+                modifier = Modifier
+                    .background(Color.White)
+                    .fillMaxSize()
+            ) {
+
+                Image(
+                    painter = painterResource(R.drawable.map_logo),
+                    contentDescription = "Map Logo",
+                    alignment = Alignment.Center,
+                    modifier = Modifier.padding(100.dp, 80.dp, 100.dp, 60.dp)
+                )
+
+                Text(
+                    "Please give us access to your GPS location",
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 25.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(15.dp, 20.dp, 15.dp, 60.dp)
+                )
+
+                Text(
+                    "This will us to notify you when you enter a area with a GeoAlarm. This is needed for the core functionality of the app",
+                    textAlign = TextAlign.Center,
+                    fontStyle = FontStyle.Italic,
+                    fontSize = 15.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(15.dp, 10.dp, 15.dp, 70.dp)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    OutlinedButton(
+                        onClick = { locationPermissionState.launchPermissionRequest() },
+                        contentPadding = PaddingValues(40.dp, 30.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = Color(0xFF3EB38A),
+                            contentColor = Color.White
+                        ),
+                    ) {
+                        Text(text = "Ok!", fontSize = 30.sp)
                     }
                 }
             }
+
         },
         permissionNotAvailableContent = {
-            Column {
+            Column(
+                modifier = Modifier
+                    .background(Color.White)
+                    .fillMaxSize()
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.map_logo),
+                    contentDescription = "Red cross",
+                    alignment = Alignment.Center,
+                    modifier = Modifier.padding(100.dp, 80.dp, 100.dp, 60.dp)
+                )
                 Text(
-                    "Location permission denied. Please, grant us access on the Settings screen."
+                    "Location permission denied too many times. Please, grant us access on the Settings screen.",
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 25.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(15.dp, 20.dp, 15.dp, 90.dp)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                Button(onClick = {
 
-                    //Navigate to app permissions settings
-                    val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                    val uri: Uri = Uri.fromParts("package", context.packageName, null)
-                    intent.data = uri
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    startActivity(context, intent, null)
 
-                }) {
-                    Text("Open Settings")
+                OutlinedButton(
+                    onClick = {
+                        //Navigate to app permissions settings
+                        val intent =
+                            Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                        val uri: Uri = Uri.fromParts("package", context.packageName, null)
+                        intent.data = uri
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        startActivity(context, intent, null)
+
+                    },
+                    contentPadding = PaddingValues(30.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        backgroundColor = Color(0xFF3EB38A),
+                        contentColor = Color.White
+                    ),
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                ) {
+                    Text(text = "Open Settings", fontSize = 20.sp)
                 }
             }
         }
@@ -383,14 +478,15 @@ fun MainMapScreen(
 
         Scaffold(
             topBar = {
-                TopAppBar(backgroundColor = Color(51, 65, 145)) {
+                TopAppBar(backgroundColor = Color(0xFF141F38)) {
                     IconButton(onClick = {
                         navController.navigate("alarms")
                         mapViewModel.onMoveMarker(null, null)
                     }) {
                         Icon(Icons.Default.Menu, "Menu", tint = Color.White)
                     }
-                    Text(text = "Geo Alarm")
+                    Text(text = "Geo Alarm", color = Color.White)
+
 
                 }
             }
@@ -402,11 +498,9 @@ fun MainMapScreen(
                     MapViewContainer(
                         map = rememberMapViewWithLifecycle { mapViewModel.onMapDestroyed() },
                         alarms = mapViewModel.alarms,
-                        isMapInitialized = mapViewModel.isMapInitialized,
-                        MapInitializer = { mMap-> mapViewModel.mapInitializer(mMap) },
-                        MapUpdate = { mapViewModel.mapUpdate(it) },
                         currentCircleSize = { (areaRadius ?: 0).toDouble() },
-                        MoveMarker = { m: Marker?, c: Circle? -> mapViewModel.onMoveMarker(m, c) },
+                        mapUpdate = { mapViewModel.mapUpdate(it) },
+                        moveMarker = { m: Marker?, c: Circle? -> mapViewModel.onMoveMarker(m, c) },
                         isLastMarker = { it.position == lastMarker?.position }
                     )
                 }
@@ -433,5 +527,5 @@ fun MainMapScreen(
 
 }
 
-// TODO : display a notification, vibrate, emit sound a
+// TODO : display a notification, vibrate, emit a sound
 
