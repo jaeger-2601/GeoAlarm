@@ -43,7 +43,6 @@ class MapScreenViewModel(
         get() = _alarmType
 
 
-
     val areaRadius = Transformations.map(sliderPosition) {
         sliderPosition.value?.times(1000)?.toInt()
     }
@@ -80,7 +79,7 @@ class MapScreenViewModel(
         is_active: Boolean,
     ): Alarm? {
 
-        lastMarker.value?.let{
+        lastMarker.value?.let {
 
             val alarm = Alarm(
                 name = alarmName.value!!,
@@ -102,7 +101,7 @@ class MapScreenViewModel(
 
 
     @SuppressLint("LongLogTag", "MissingPermission")
-    fun mapUpdate(googleMap: GoogleMap){
+    fun mapUpdate(googleMap: GoogleMap) {
 
         // Update google maps with the creation and deletion of markers
 
@@ -134,7 +133,7 @@ class MapScreenViewModel(
             Log.i("mapUpdate", "Updating Map")
             Log.i(
                 "mapUpdate",
-                "activeAlarms:${activeAlarms.size} googleMapMarkers:${googleMapMarkers.size} LiveData:${alarms.value?.filter{it.is_active}?.size}"
+                "activeAlarms:${activeAlarms.size} googleMapMarkers:${googleMapMarkers.size} LiveData:${alarms.value?.filter { it.is_active }?.size}"
             )
 
             // An alarm has been deactivated or deleted
@@ -188,8 +187,7 @@ class MapScreenViewModel(
                                     .position(alarm.location)
                                     .title(alarm.name)
                                     .snippet(
-                                        ("Type : ${if (alarm.type == AlarmType.ON_ENTRY) "Entry" else "Exit"}" +
-                                                "Lat: %.4f Long: %.4f").format(
+                                        ("Lat: %.4f Long: %.4f").format(
                                             alarm.location.latitude,
                                             alarm.location.longitude
                                         )
@@ -212,7 +210,7 @@ class MapScreenViewModel(
 
     }
 
-    fun onMapDestroyed(){
+    fun onMapDestroyed() {
         isMapInitialized = false
         googleMapMarkers.clear()
         googleMapCircles.clear()

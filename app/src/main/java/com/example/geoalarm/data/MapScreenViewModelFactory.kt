@@ -6,7 +6,7 @@ import com.example.geoalarm.data.room.AlarmsDao
 
 class MapScreenViewModelFactory(
     private val dataSource: AlarmsDao
-    ) : ViewModelProvider.Factory {
+) : ViewModelProvider.Factory {
 
 
     @Suppress("unchecked_cast")

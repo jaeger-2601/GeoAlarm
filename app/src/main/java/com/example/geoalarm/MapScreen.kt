@@ -141,6 +141,7 @@ fun MapViewContainer(
     }
 }
 
+@SuppressLint("InlinedApi")
 @ExperimentalPermissionsApi
 @Composable
 fun MarkerSaveMenu(
@@ -500,7 +501,7 @@ fun MainMapScreen(
                         map = rememberMapViewWithLifecycle { mapViewModel.onMapDestroyed() },
                         alarms = mapViewModel.alarms,
                         currentCircleSize = { (areaRadius ?: 0).toDouble() },
-                        mapUpdate = {map -> mapViewModel.mapUpdate(map) },
+                        mapUpdate = { map -> mapViewModel.mapUpdate(map) },
                         moveMarker = { m: Marker?, c: Circle? -> mapViewModel.onMoveMarker(m, c) },
                         isLastMarker = { it.position == lastMarker?.position }
                     )
@@ -529,5 +530,4 @@ fun MainMapScreen(
 }
 
 // TODO : make notification vibrate and emit a sound with a full screen activity
-// TODO : alarm edit screen
 
