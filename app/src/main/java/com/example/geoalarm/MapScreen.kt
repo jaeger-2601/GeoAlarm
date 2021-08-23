@@ -74,21 +74,21 @@ fun MapViewContainer(
         coroutineScope.launch {
             val googleMap = mapView.awaitMap()
 
-            Log.d("MapViewContainer", "coroutineScope : Map rendered")
+            Log.i("MapViewContainer", "coroutineScope : Map rendered")
 
-
+            Log.i("mapUpdate", "Launching mapUpdate : ${gAlarms?.size}")
             mapUpdate(googleMap)
 
             googleMap.setOnMarkerClickListener {
 
-                if (isLastMarker(it)) {
+                if (isLastMarker(it))
                     moveMarker(null, null)
-                    true
-                } else {
+                else
                     it.showInfoWindow()
-                    true
-                }
+
+                true
             }
+
             googleMap.setOnMapClickListener {
 
                 val circle = googleMap.addCircle(
@@ -190,6 +190,7 @@ fun MarkerSaveMenu(
                 }
             }
         },
+
         permissionNotAvailableContent = {
             Column {
                 Text(
@@ -499,7 +500,7 @@ fun MainMapScreen(
                         map = rememberMapViewWithLifecycle { mapViewModel.onMapDestroyed() },
                         alarms = mapViewModel.alarms,
                         currentCircleSize = { (areaRadius ?: 0).toDouble() },
-                        mapUpdate = { mapViewModel.mapUpdate(it) },
+                        mapUpdate = {map -> mapViewModel.mapUpdate(map) },
                         moveMarker = { m: Marker?, c: Circle? -> mapViewModel.onMoveMarker(m, c) },
                         isLastMarker = { it.position == lastMarker?.position }
                     )
@@ -527,5 +528,6 @@ fun MainMapScreen(
 
 }
 
-// TODO : display a notification, vibrate, emit a sound
+// TODO : make notification vibrate and emit a sound with a full screen activity
+// TODO : alarm edit screen
 

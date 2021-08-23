@@ -16,6 +16,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -135,6 +136,7 @@ fun AlarmCard(alarm: Alarm, isActive: Boolean, toggleAlarm: (Boolean) -> Unit) {
 fun AlarmScreen(navController: NavHostController, viewModel: AlarmsScreenViewModel) {
 
     val alarms by viewModel.alarms.observeAsState()
+    val context = LocalContext.current
 
     Log.i("Screen", "AlarmScreen")
 
@@ -160,7 +162,7 @@ fun AlarmScreen(navController: NavHostController, viewModel: AlarmsScreenViewMod
                         AlarmCard(
                             alarm,
                             viewModel.database.isAlarmActive(alarm.id).observeAsState(false).value
-                        ) { _ -> viewModel.toggleAlarm(alarm) }
+                        ) { _ -> viewModel.toggleAlarm(alarm, context) }
                     }
                 }
             }

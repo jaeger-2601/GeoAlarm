@@ -101,3 +101,22 @@ fun addGeofence(
         failure("Permissions not granted", java.lang.Exception("Permissions not granted"))
     }
 }
+
+fun removeGeoFence(
+    geofencingClient: GeofencingClient,
+    alarm: Alarm,
+    context: Context,
+    success: () -> Unit,
+    failure: (error: String, exception: Exception) -> Unit
+) {
+    geofencingClient
+        .removeGeofences(mutableListOf(alarm.id.toString(),))
+        .addOnSuccessListener {
+            //saveAll(getAll() + reminder)
+            success()
+        }
+        // 4
+        .addOnFailureListener {
+            failure(GeofenceErrorMessages.getErrorString(context, it), it)
+        }
+}

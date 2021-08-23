@@ -13,6 +13,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -43,6 +44,7 @@ class MainActivity : ComponentActivity() {
         PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
+    @ExperimentalMaterialApi
     @ExperimentalPermissionsApi
     @ExperimentalAnimationApi
     @Composable
@@ -99,18 +101,20 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-            @ExperimentalPermissionsApi
-            @ExperimentalAnimationApi
+    @ExperimentalMaterialApi
+    @ExperimentalPermissionsApi
+    @ExperimentalAnimationApi
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
 
 
         val dataSource = GeoAlarmDatabase.getInstance(this.application).alarmsDao()
+        geofencingClient = LocationServices.getGeofencingClient(this)
 
         val alarmsScreenViewModel =
             ViewModelProvider(
-                this, AlarmsScreenViewModelFactory(dataSource)
+                this, AlarmsScreenViewModelFactory(dataSource, geofencingClient, geofencePendingIntent)
             ).get(AlarmsScreenViewModel::class.java)
         val mapScreenViewModel = ViewModelProvider(
             this, MapScreenViewModelFactory(dataSource)).get(MapScreenViewModel::class.java)
@@ -120,7 +124,7 @@ class MainActivity : ComponentActivity() {
             "MapScreen" to mapScreenViewModel
         )
 
-        geofencingClient = LocationServices.getGeofencingClient(this)
+
 
         createNotificationChannel()
 

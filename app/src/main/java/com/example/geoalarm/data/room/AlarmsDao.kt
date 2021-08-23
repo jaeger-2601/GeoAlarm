@@ -3,6 +3,7 @@ package com.example.geoalarm.data.room
 import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.example.geoalarm.data.Alarm
+import com.example.geoalarm.data.AlarmType
 import com.google.android.libraries.maps.model.LatLng
 
 @Dao
@@ -15,7 +16,10 @@ interface AlarmsDao {
     suspend fun get(location: LatLng): Alarm?
 
     @Query("SELECT * FROM alarms")
-    fun getAllAlarms(): LiveData<List<Alarm>>
+    fun getAllAlarmsLive(): LiveData<List<Alarm>>
+
+    @Query("SELECT * from alarms WHERE is_active = 1")
+    suspend fun getActiveAlarms(): List<Alarm>
 
     @Query("SELECT is_active FROM alarms WHERE id = :id")
     fun isAlarmActive(id: Int): LiveData<Boolean>

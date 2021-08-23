@@ -48,7 +48,7 @@ class MapScreenViewModel(
         sliderPosition.value?.times(1000)?.toInt()
     }
 
-    val alarms = database.getAllAlarms()
+    val alarms = database.getAllAlarmsLive()
 
     private var googleMapMarkers = mutableListOf<Marker>()
     private var googleMapCircles = mutableListOf<Circle>()
@@ -80,8 +80,6 @@ class MapScreenViewModel(
         is_active: Boolean,
     ): Alarm? {
 
-
-
         lastMarker.value?.let{
 
             val alarm = Alarm(
@@ -92,7 +90,7 @@ class MapScreenViewModel(
                 is_active = is_active,
                 created_at = Date()
             )
-            viewModelScope.launch {
+            runBlocking {
                 database.insert(alarm)
             }
 
@@ -108,94 +106,107 @@ class MapScreenViewModel(
 
         // Update google maps with the creation and deletion of markers
 
-        var isPresent: Boolean
-        var index: Int
-        val changedMarkers = mutableListOf<Marker>()
-        var markerOptions: MarkerOptions
-        var circleOptions: CircleOptions
-        val activeAlarms = alarms.value!!.filter { it.is_active }
+        viewModelScope.launch {
 
-        if (!isMapInitialized) {
+            var isPresent: Boolean
+            var index: Int
+            val changedMarkers = mutableListOf<Marker>()
+            var markerOptions: MarkerOptions
+            var circleOptions: CircleOptions
+            // LiveData alarms does not update value properly, use the suspend function inside a coroutine to get the list instead.
+            val activeAlarms = database.getActiveAlarms()
 
-            googleMap.mapType = GoogleMap.MAP_TYPE_TERRAIN
-            googleMap.isMyLocationEnabled = true
 
-            googleMap.clear()
+            if (!isMapInitialized) {
 
-            isMapInitialized = true
-        }
+                googleMap.mapType = GoogleMap.MAP_TYPE_TERRAIN
+                googleMap.isMyLocationEnabled = true
 
-        Log.i("mapUpdate", "Updating Map")
+                googleMap.clear()
 
-        // An alarm has been deactivated or deleted
-        if (googleMapMarkers.size > activeAlarms.size){
-
-            for (marker in googleMapMarkers) {
-
-                isPresent = false
-
-                for(alarm in activeAlarms){
-                    if (marker.position == alarm.location)
-                        isPresent = true
-                }
-
-                if (!isPresent)
-                    changedMarkers.add(marker)
+                isMapInitialized = true
             }
 
-            for (marker in changedMarkers){
-                index = googleMapMarkers.lastIndexOf(marker)
-                googleMapMarkers.removeAt(index)
-                googleMapCircles.removeAt(index)
-            }
+            if (alarms.value == null)
+                return@launch
 
-        }
-        // An alarm has been activated or created
-        else if (googleMapMarkers.size < alarms.value!!.size){
 
-            for (alarm in activeAlarms){
-                isPresent = false
+            Log.i("mapUpdate", "Updating Map")
+            Log.i(
+                "mapUpdate",
+                "activeAlarms:${activeAlarms.size} googleMapMarkers:${googleMapMarkers.size} LiveData:${alarms.value?.filter{it.is_active}?.size}"
+            )
 
-                for(marker in googleMapMarkers){
-                    if (marker.position == alarm.location)
+            // An alarm has been deactivated or deleted
+            if (googleMapMarkers.size > activeAlarms.size) {
+
+                for (marker in googleMapMarkers) {
+
+                    isPresent = false
+
+                    for (alarm in activeAlarms) {
+                        if (marker.position == alarm.location)
                             isPresent = true
+                    }
+
+                    if (!isPresent)
+                        changedMarkers.add(marker)
                 }
 
-                if (!isPresent){
+                for (marker in changedMarkers) {
+                    index = googleMapMarkers.lastIndexOf(marker)
+                    googleMapMarkers.removeAt(index)
+                    googleMapCircles.removeAt(index)
+                }
 
+            }
+            // An alarm has been activated or created
+            else if (googleMapMarkers.size < activeAlarms.size) {
 
-                    if (alarm.type == AlarmType.ON_ENTRY){
-                        markerOptions = ENTER_MARKER_OPTIONS
-                        circleOptions = ENTER_CIRCLE_OPTIONS
+                for (alarm in activeAlarms) {
+                    isPresent = false
+
+                    for (marker in googleMapMarkers) {
+                        if (marker.position == alarm.location)
+                            isPresent = true
                     }
-                    else{
-                        markerOptions = EXIT_MARKER_OPTIONS
-                        circleOptions = EXIT_CIRCLE_OPTIONS
-                    }
 
-                    googleMapMarkers.add(
-                        googleMap.addMarker(
-                            markerOptions
-                                .position(alarm.location)
-                                .title(alarm.name)
-                                .snippet(
-                                    "Lat: %.4f Long: %.4f".format(
-                                        alarm.location.latitude,
-                                        alarm.location.longitude
+                    if (!isPresent) {
+
+
+                        if (alarm.type == AlarmType.ON_ENTRY) {
+                            markerOptions = ENTER_MARKER_OPTIONS
+                            circleOptions = ENTER_CIRCLE_OPTIONS
+                        } else {
+                            markerOptions = EXIT_MARKER_OPTIONS
+                            circleOptions = EXIT_CIRCLE_OPTIONS
+                        }
+
+                        googleMapMarkers.add(
+                            googleMap.addMarker(
+                                markerOptions
+                                    .position(alarm.location)
+                                    .title(alarm.name)
+                                    .snippet(
+                                        ("Type : ${if (alarm.type == AlarmType.ON_ENTRY) "Entry" else "Exit"}" +
+                                                "Lat: %.4f Long: %.4f").format(
+                                            alarm.location.latitude,
+                                            alarm.location.longitude
+                                        )
                                     )
-                                )
+                            )
                         )
-                    )
 
-                    googleMapCircles.add(
-                        googleMap.addCircle(
-                            circleOptions
-                                .center(alarm.location)
-                                .radius(alarm.radius.toDouble())
+                        googleMapCircles.add(
+                            googleMap.addCircle(
+                                circleOptions
+                                    .center(alarm.location)
+                                    .radius(alarm.radius.toDouble())
+                            )
                         )
-                    )
+                    }
+
                 }
-
             }
         }
 
