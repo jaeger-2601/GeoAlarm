@@ -3,7 +3,6 @@ package com.example.geoalarm.data.room
 import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.example.geoalarm.data.Alarm
-import com.example.geoalarm.data.AlarmType
 import com.google.android.libraries.maps.model.LatLng
 
 @Dao

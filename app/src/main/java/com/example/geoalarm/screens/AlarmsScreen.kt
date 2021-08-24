@@ -13,7 +13,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -33,8 +36,6 @@ import androidx.navigation.NavHostController
 import com.example.geoalarm.data.Alarm
 import com.example.geoalarm.data.AlarmType
 import com.example.geoalarm.data.AlarmsScreenViewModel
-import com.google.android.libraries.maps.model.Circle
-import com.google.android.libraries.maps.model.Marker
 
 @ExperimentalMaterialApi
 @Composable

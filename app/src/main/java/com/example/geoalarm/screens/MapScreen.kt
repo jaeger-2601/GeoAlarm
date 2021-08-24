@@ -2,15 +2,12 @@ package com.example.geoalarm
 
 import android.annotation.SuppressLint
 import android.app.PendingIntent
-import android.content.Intent
-import android.net.Uri
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
@@ -25,22 +22,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.LiveData
 import androidx.navigation.NavController
 import com.example.geoalarm.data.Alarm
 import com.example.geoalarm.data.AlarmType
 import com.example.geoalarm.data.MapScreenViewModel
+import com.example.geoalarm.screens.BackgroundLocationAccessDenied
+import com.example.geoalarm.screens.BackgroundLocationAccessRationale
+import com.example.geoalarm.screens.LocationAccessDenied
+import com.example.geoalarm.screens.LocationAccessRationale
+import com.example.geoalarm.utils.addGeofence
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionRequired
 import com.google.accompanist.permissions.rememberPermissionState
@@ -52,7 +49,6 @@ import com.google.android.libraries.maps.model.Marker
 import com.google.android.libraries.maps.model.MarkerOptions
 import com.google.maps.android.ktx.awaitMap
 import kotlinx.coroutines.launch
-
 
 @SuppressLint("MissingPermission")
 @Composable
@@ -164,55 +160,8 @@ fun MarkerSaveMenu(
 
     PermissionRequired(
         permissionState = bgLocationPermissionState,
-        permissionNotGrantedContent = {
-
-            Column(
-                modifier = Modifier
-                    .background(Color(0xFF131E37))
-                    .padding(20.dp, 20.dp)
-            ) {
-                Text(
-                    "To set up GeoAlarms, we need access to your location at all times. Please grant the permission.",
-                    color = Color.White
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp, 20.dp),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Button(
-                        onClick = { bgLocationPermissionState.launchPermissionRequest() },
-                        colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF3EB38A)),
-                    ) {
-                        Text("Ok!")
-                    }
-                }
-            }
-        },
-
-        permissionNotAvailableContent = {
-            Column {
-                Text(
-                    "Location permission denied. Please, grant us access on the Settings screen."
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(onClick = {
-
-                    //Navigate to app permissions settings
-                    val intent =
-                        Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                    val uri: Uri = Uri.fromParts("package", context.packageName, null)
-                    intent.data = uri
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    startActivity(context, intent, null)
-
-                }) {
-                    Text("Open Settings")
-                }
-            }
-        }
+        permissionNotGrantedContent = { BackgroundLocationAccessRationale(bgLocationPermissionState) },
+        permissionNotAvailableContent = { BackgroundLocationAccessDenied(context) }
     ) {
 
         Column(
@@ -375,108 +324,9 @@ fun MainMapScreen(
 
     PermissionRequired(
         permissionState = locationPermissionState,
-        permissionNotGrantedContent = {
-
-            Column(
-                modifier = Modifier
-                    .background(Color.White)
-                    .fillMaxSize()
-            ) {
-
-                Image(
-                    painter = painterResource(R.drawable.map_logo),
-                    contentDescription = "Map Logo",
-                    alignment = Alignment.Center,
-                    modifier = Modifier.padding(100.dp, 80.dp, 100.dp, 60.dp)
-                )
-
-                Text(
-                    "Please give us access to your GPS location",
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 25.sp,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(15.dp, 20.dp, 15.dp, 60.dp)
-                )
-
-                Text(
-                    "This will us to notify you when you enter a area with a GeoAlarm. This is needed for the core functionality of the app",
-                    textAlign = TextAlign.Center,
-                    fontStyle = FontStyle.Italic,
-                    fontSize = 15.sp,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(15.dp, 10.dp, 15.dp, 70.dp)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    OutlinedButton(
-                        onClick = { locationPermissionState.launchPermissionRequest() },
-                        contentPadding = PaddingValues(40.dp, 30.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            backgroundColor = Color(0xFF3EB38A),
-                            contentColor = Color.White
-                        ),
-                    ) {
-                        Text(text = "Ok!", fontSize = 30.sp)
-                    }
-                }
-            }
-
-        },
-        permissionNotAvailableContent = {
-            Column(
-                modifier = Modifier
-                    .background(Color.White)
-                    .fillMaxSize()
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.map_logo),
-                    contentDescription = "Red cross",
-                    alignment = Alignment.Center,
-                    modifier = Modifier.padding(100.dp, 80.dp, 100.dp, 60.dp)
-                )
-                Text(
-                    "Location permission denied too many times. Please, grant us access on the Settings screen.",
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 25.sp,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(15.dp, 20.dp, 15.dp, 90.dp)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-
-                OutlinedButton(
-                    onClick = {
-                        //Navigate to app permissions settings
-                        val intent =
-                            Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                        val uri: Uri = Uri.fromParts("package", context.packageName, null)
-                        intent.data = uri
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        startActivity(context, intent, null)
-
-                    },
-                    contentPadding = PaddingValues(30.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        backgroundColor = Color(0xFF3EB38A),
-                        contentColor = Color.White
-                    ),
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                ) {
-                    Text(text = "Open Settings", fontSize = 20.sp)
-                }
-            }
-        }
+        permissionNotGrantedContent = { LocationAccessRationale(locationPermissionState) },
+        permissionNotAvailableContent = { LocationAccessDenied(context) }
     ) {
-
 
         Scaffold(
             topBar = {

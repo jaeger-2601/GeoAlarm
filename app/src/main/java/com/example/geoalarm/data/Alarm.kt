@@ -6,7 +6,7 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.google.android.libraries.maps.model.LatLng
-import java.util.Date
+import java.util.*
 
 enum class AlarmType{
     ON_ENTRY,

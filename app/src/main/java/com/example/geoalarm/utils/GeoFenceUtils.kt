@@ -1,9 +1,10 @@
-package com.example.geoalarm
+package com.example.geoalarm.utils
 
 import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Context
 import android.util.Log
+import com.example.geoalarm.R
 import com.example.geoalarm.data.Alarm
 import com.example.geoalarm.data.AlarmType
 import com.google.android.gms.common.api.ApiException

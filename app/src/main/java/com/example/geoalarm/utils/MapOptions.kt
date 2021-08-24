@@ -1,6 +1,9 @@
 package com.example.geoalarm
 
-import com.google.android.libraries.maps.model.*
+import com.google.android.libraries.maps.model.CircleOptions
+import com.google.android.libraries.maps.model.Dash
+import com.google.android.libraries.maps.model.Gap
+import com.google.android.libraries.maps.model.MarkerOptions
 
 val CURRENT_CIRCLE_OPTIONS: CircleOptions =
     CircleOptions()

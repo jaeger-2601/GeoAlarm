@@ -94,6 +94,9 @@ class GeoFenceBroadcastReceiver : BroadcastReceiver() {
         val alarmSound: Uri =
             RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
 
+        if (alarm == null)
+            return null
+
         val notificationBuilder =
             context?.let {
                 NotificationCompat.Builder(it, "GeoAlarm")
@@ -105,10 +108,10 @@ class GeoFenceBroadcastReceiver : BroadcastReceiver() {
                     .setContentIntent(fullScreenPendingIntent)
                     .setFullScreenIntent(fullScreenPendingIntent, true)
                     .setSmallIcon(R.drawable.maps_icon_direction)
-                    .setContentTitle(alarm?.name)
+                    .setContentTitle(alarm.name)
                     .setContentText("Lat: %.4f Long: %.4f".format(
-                        alarm?.location?.latitude,
-                        alarm?.location?.longitude
+                        alarm.location.latitude,
+                        alarm.location.longitude
                     ))
 
                     // Use a full-screen intent only for the highest-priority alerts where you
