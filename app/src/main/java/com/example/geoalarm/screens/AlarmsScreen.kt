@@ -1,6 +1,8 @@
 package com.example.geoalarm
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
@@ -47,6 +49,7 @@ fun AlarmCard(
 ) {
 
     Log.i("Screen", "AlarmCard")
+    val resources = LocalContext.current.resources
 
     Card(modifier = Modifier.fillMaxWidth(), onClick = { viewModel.changeSelectedAlarm(alarm) }) {
         Row(
@@ -90,14 +93,14 @@ fun AlarmCard(
                     Row {
                         Icon(
                             if (alarm.type == AlarmType.ON_ENTRY) Icons.Default.ArrowForward else Icons.Default.ArrowBack,
-                            contentDescription = "Location Icon",
+                            contentDescription = resources.getString(R.string.location_icon),
                             tint = Color.Gray,
                             modifier = Modifier.size(18.dp),
 
                             )
 
                         Text(
-                            text = if (alarm.type == AlarmType.ON_ENTRY) "Entry" else "Exit",
+                            text = if (alarm.type == AlarmType.ON_ENTRY) resources.getString(R.string.entry) else resources.getString(R.string.exit),
                             fontStyle = FontStyle.Italic,
                             color = Color.Gray
                         )
@@ -106,14 +109,14 @@ fun AlarmCard(
                     Row {
                         Icon(
                             Icons.Default.LocationOn,
-                            contentDescription = "Location Icon",
+                            contentDescription = resources.getString(R.string.location_icon),
                             tint = Color.Gray,
                             modifier = Modifier.size(18.dp),
 
                             )
 
                         Text(
-                            text = "%.4f, %.4f".format(
+                            text = resources.getString(R.string.location_format).format(
                                 alarm.location.latitude,
                                 alarm.location.longitude
                             ),
@@ -125,14 +128,14 @@ fun AlarmCard(
                     Row {
                         Icon(
                             Icons.Default.Search,
-                            contentDescription = "Search icon",
+                            contentDescription = resources.getString(R.string.search_icon),
                             tint = Color.Gray,
                             modifier = Modifier.size(18.dp),
 
                             )
 
                         Text(
-                            text = "${alarm.radius} m",
+                            text = resources.getString(R.string.radius_format).format(alarm.radius),
                             fontStyle = FontStyle.Italic,
                             color = Color.Gray
                         )
@@ -146,6 +149,7 @@ fun AlarmCard(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.M)
 @Composable
 fun AlarmEditMenu(viewModel: AlarmsScreenViewModel) {
 
@@ -154,16 +158,19 @@ fun AlarmEditMenu(viewModel: AlarmsScreenViewModel) {
     val sliderPosition by viewModel.sliderPosition.observeAsState()
     val areaRadius by viewModel.areaRadius.observeAsState()
 
+    val theme = LocalContext.current.theme
+    val resources = LocalContext.current.resources
+
     Column(
         modifier = Modifier
-            .background(Color(0xFF131E37))
+            .background(Color(resources.getColor(R.color.dark_blue, theme)))
             .wrapContentHeight()
     ) {
 
         OutlinedTextField(
             value = alarmName ?: "",
             onValueChange = { viewModel.onAlarmNameChange(it) },
-            label = { Text("Alarm Name") },
+            label = { Text(resources.getString(R.string.alarm_name_label)) },
             colors = TextFieldDefaults.outlinedTextFieldColors(
                 textColor = Color.White,
                 cursorColor = Color.White,
@@ -180,9 +187,9 @@ fun AlarmEditMenu(viewModel: AlarmsScreenViewModel) {
         Text(
             buildAnnotatedString {
                 withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                    append("Radius : ")
+                    append(resources.getString(R.string.radius_label))
                 }
-                append("$areaRadius m")
+                append(resources.getString(R.string.radius_format).format(areaRadius))
 
             },
             color = Color.White,
@@ -194,11 +201,9 @@ fun AlarmEditMenu(viewModel: AlarmsScreenViewModel) {
             onValueChange = { viewModel.onChangeSlider(it) },
             modifier = Modifier.padding(15.dp, 0.dp, 15.dp, 5.dp),
             colors = SliderDefaults.colors(
-                thumbColor = Color(0xffbd93f9),
-                activeTrackColor = Color(
-                    0xffc296ff
-                ),
-                inactiveTrackColor = Color(0xFF8b6ab8)
+                thumbColor = Color(resources.getColor(R.color.light_purple, theme)),
+                activeTrackColor = Color(resources.getColor(R.color.light_purple, theme)),
+                inactiveTrackColor = Color(resources.getColor(R.color.dark_purple, theme))
             )
         )
 
@@ -212,35 +217,27 @@ fun AlarmEditMenu(viewModel: AlarmsScreenViewModel) {
                 onClick = { viewModel.onChangeAlarmType(AlarmType.ON_ENTRY) },
                 modifier = Modifier
                     .background(
-                        if (alarmType == AlarmType.ON_ENTRY) Color(0xFF3EB38A) else Color(
-                            0xFFFFFFFF
-                        )
+                        if (alarmType == AlarmType.ON_ENTRY) Color(resources.getColor(R.color.light_green, theme)) else Color.White
                     )
                     .fillMaxWidth(0.35F)
             ) {
                 Text(
-                    "Entry",
-                    color = if (alarmType == AlarmType.ON_ENTRY) Color(0xFFFFFFFF) else Color(
-                        0xFF000000
-                    )
+                    resources.getString(R.string.entry),
+                    color = if (alarmType == AlarmType.ON_ENTRY) Color.White else Color.Black
                 )
-
             }
+
             TextButton(
                 onClick = { viewModel.onChangeAlarmType(AlarmType.ON_EXIT) },
                 modifier = Modifier
                     .background(
-                        if (alarmType == AlarmType.ON_EXIT) Color(0xFF3EB38A) else Color(
-                            0xFFFFFFFF
-                        )
+                        if (alarmType == AlarmType.ON_EXIT) Color(resources.getColor(R.color.light_green, theme)) else Color.White
                     )
                     .fillMaxWidth(0.5F)
             ) {
                 Text(
-                    "Exit",
-                    color = if (alarmType == AlarmType.ON_EXIT) Color(0xFFFFFFFF) else Color(
-                        0xFF000000
-                    )
+                    resources.getString(R.string.exit),
+                    color = if (alarmType == AlarmType.ON_EXIT) Color.White else Color.Black
                 )
 
             }
@@ -253,23 +250,24 @@ fun AlarmEditMenu(viewModel: AlarmsScreenViewModel) {
 
             TextButton(onClick = { viewModel.menuClose() }) {
                 Text(
-                    "Close",
+                    resources.getString(R.string.close),
                     color = Color.LightGray
                 )
             }
 
             TextButton(onClick = { viewModel.deleteAlarm() }) {
-                Text("Delete", color = Color(0xFFFF5F6E))
+                Text(resources.getString(R.string.delete), color = Color(resources.getColor(R.color.light_red, theme)))
             }
 
             TextButton(onClick = { viewModel.modifyAlarm() }) {
-                Text("Save", color = Color(0xffc296ff))
+                Text(resources.getString(R.string.save), color = Color(resources.getColor(R.color.light_purple, theme)))
             }
 
         }
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.M)
 @ExperimentalAnimationApi
 @ExperimentalMaterialApi
 @Composable
@@ -279,19 +277,21 @@ fun AlarmScreen(navController: NavHostController, viewModel: AlarmsScreenViewMod
     val selectedAlarm by viewModel.selectedAlarm.observeAsState()
 
     val context = LocalContext.current
+    val resources = context.resources
+    val theme = context.theme
 
     Log.i("Screen", "AlarmScreen")
 
     Scaffold(
         topBar = {
-            TopAppBar(backgroundColor = Color(0xFF131E37)) {
+            TopAppBar(backgroundColor = Color(resources.getColor(R.color.dark_blue, theme))) {
                 IconButton(onClick = {
                     viewModel.menuClose()
                     navController.popBackStack()
                 }) {
-                    Icon(Icons.Default.ArrowBack, "Menu", tint = Color.White)
+                    Icon(Icons.Default.ArrowBack, resources.getString(R.string.menu), tint = Color.White)
                 }
-                Text(text = "Geo Alarm", color = Color.White)
+                Text(text = resources.getString(R.string.app_name), color = Color.White)
 
             }
         }
@@ -303,18 +303,18 @@ fun AlarmScreen(navController: NavHostController, viewModel: AlarmsScreenViewMod
                 ) {
                     Image(
                         painter = painterResource(R.drawable.ic_ghost),
-                        contentDescription = "Ghost",
+                        contentDescription = resources.getString(R.string.ghost_icon),
                         alignment = Alignment.Center,
                         modifier = Modifier.padding(100.dp, 80.dp, 100.dp, 60.dp)
                     )
                     Text(
-                        "Ouhh..it's empty here.",
+                        resources.getString(R.string.no_alarms),
                         fontWeight = FontWeight.Bold,
                         fontSize = 30.sp,
                         modifier = Modifier.padding(10.dp, 30.dp, 10.dp, 10.dp)
                     )
                     Text(
-                        "Go back and add some GeoAlarms :)",
+                        resources.getString(R.string.add_alarms_prompt),
                         color = Color.DarkGray,
                         modifier = Modifier.padding(10.dp, 30.dp, 10.dp, 20.dp)
                     )

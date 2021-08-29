@@ -4,9 +4,9 @@ import android.app.PendingIntent
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.*
-import com.example.geoalarm.addGeofence
 import com.example.geoalarm.data.room.AlarmsDao
-import com.example.geoalarm.removeGeoFence
+import com.example.geoalarm.utils.addGeofence
+import com.example.geoalarm.utils.removeGeoFence
 import com.google.android.gms.location.GeofencingClient
 import kotlinx.coroutines.launch
 

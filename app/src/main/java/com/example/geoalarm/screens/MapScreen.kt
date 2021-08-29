@@ -2,7 +2,9 @@ package com.example.geoalarm
 
 import android.annotation.SuppressLint
 import android.app.PendingIntent
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
@@ -62,6 +64,7 @@ fun MapViewContainer(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val gAlarms by alarms.observeAsState()
+    val resources = LocalContext.current.resources
 
     Log.i("Screen", "MapViewContainer")
 
@@ -71,8 +74,8 @@ fun MapViewContainer(
             val googleMap = mapView.awaitMap()
 
             Log.i("MapViewContainer", "coroutineScope : Map rendered")
-
             Log.i("mapUpdate", "Launching mapUpdate : ${gAlarms?.size}")
+
             mapUpdate(googleMap)
 
             googleMap.setOnMarkerClickListener {
@@ -98,8 +101,8 @@ fun MapViewContainer(
                 val marker = googleMap.addMarker(
                     CURRENT_MARKER_OPTIONS
                         .position(it)
-                        .title("Location")
-                        .snippet("Lat: %.4f Long: %.4f".format(it.latitude, it.longitude))
+                        .title(resources.getString(R.string.location))
+                        .snippet(resources.getString(R.string.location_present_format).format(it.latitude, it.longitude))
                 )
 
                 moveMarker(marker, circle)
@@ -122,7 +125,7 @@ fun MapViewContainer(
                         .position(poi.latLng)
                         .title(poi.name)
                         .snippet(
-                            "Lat: %.4f Long: %.4f".format(
+                            resources.getString(R.string.location_present_format).format(
                                 poi.latLng.latitude,
                                 poi.latLng.longitude
                             )
@@ -137,6 +140,7 @@ fun MapViewContainer(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.M)
 @SuppressLint("InlinedApi")
 @ExperimentalPermissionsApi
 @Composable
@@ -152,6 +156,8 @@ fun MarkerSaveMenu(
     val alarmType by mapViewModel.alarmType.observeAsState(AlarmType.ON_ENTRY)
 
     val context = LocalContext.current
+    val resources = context.resources
+    val theme =  context.theme
 
     val bgLocationPermissionState =
         rememberPermissionState(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION)
@@ -166,14 +172,14 @@ fun MarkerSaveMenu(
 
         Column(
             modifier = Modifier
-                .background(Color(0xFF131E37))
+                .background(Color(resources.getColor(R.color.dark_blue, theme)))
                 .wrapContentHeight()
         ) {
 
             OutlinedTextField(
                 value = alarmName,
                 onValueChange = { mapViewModel.onAlarmNameChange(it) },
-                label = { Text("Alarm Name") },
+                label = { Text(resources.getString(R.string.alarm_name_label)) },
                 colors = TextFieldDefaults.outlinedTextFieldColors(
                     textColor = Color.White,
                     cursorColor = Color.White,
@@ -190,9 +196,9 @@ fun MarkerSaveMenu(
             Text(
                 buildAnnotatedString {
                     withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                        append("Radius : ")
+                        append(resources.getString(R.string.radius_label))
                     }
-                    append("$areaRadius m")
+                    append(resources.getString(R.string.radius_format).format(areaRadius))
 
                 },
                 color = Color.White,
@@ -204,11 +210,9 @@ fun MarkerSaveMenu(
                 onValueChange = { mapViewModel.onChangeSlider(it) },
                 modifier = Modifier.padding(15.dp, 0.dp, 15.dp, 5.dp),
                 colors = SliderDefaults.colors(
-                    thumbColor = Color(0xffbd93f9),
-                    activeTrackColor = Color(
-                        0xffc296ff
-                    ),
-                    inactiveTrackColor = Color(0xFF8b6ab8)
+                    thumbColor = Color(resources.getColor(R.color.light_purple, theme)),
+                    activeTrackColor = Color(resources.getColor(R.color.light_purple, theme)),
+                    inactiveTrackColor = Color(resources.getColor(R.color.dark_purple, theme))
                 )
             )
 
@@ -222,17 +226,13 @@ fun MarkerSaveMenu(
                     onClick = { mapViewModel.onChangeAlarmType(AlarmType.ON_ENTRY) },
                     modifier = Modifier
                         .background(
-                            if (alarmType == AlarmType.ON_ENTRY) Color(0xFF3EB38A) else Color(
-                                0xFFFFFFFF
-                            )
+                            if (alarmType == AlarmType.ON_ENTRY) Color(resources.getColor(R.color.light_green, theme)) else Color.White
                         )
                         .fillMaxWidth(0.35F)
                 ) {
                     Text(
-                        "Entry",
-                        color = if (alarmType == AlarmType.ON_ENTRY) Color(0xFFFFFFFF) else Color(
-                            0xFF000000
-                        )
+                        resources.getString(R.string.entry),
+                        color = if (alarmType == AlarmType.ON_ENTRY) Color.White else Color.Black
                     )
 
                 }
@@ -240,17 +240,13 @@ fun MarkerSaveMenu(
                     onClick = { mapViewModel.onChangeAlarmType(AlarmType.ON_EXIT) },
                     modifier = Modifier
                         .background(
-                            if (alarmType == AlarmType.ON_EXIT) Color(0xFF3EB38A) else Color(
-                                0xFFFFFFFF
-                            )
+                            if (alarmType == AlarmType.ON_EXIT) Color(resources.getColor(R.color.light_green, theme)) else Color.White
                         )
                         .fillMaxWidth(0.5F)
                 ) {
                     Text(
-                        "Exit",
-                        color = if (alarmType == AlarmType.ON_EXIT) Color(0xFFFFFFFF) else Color(
-                            0xFF000000
-                        )
+                        resources.getString(R.string.exit),
+                        color = if (alarmType == AlarmType.ON_EXIT) Color.White else Color.Black
                     )
 
                 }
@@ -264,8 +260,8 @@ fun MarkerSaveMenu(
                 IconButton(onClick = { mapViewModel.onMoveMarker(null, null) }) {
                     Icon(
                         Icons.Default.Close,
-                        contentDescription = "Cancel",
-                        tint = Color(0xFFFF5F6E)
+                        contentDescription = resources.getString(R.string.cancel),
+                        tint = Color(resources.getColor(R.color.light_red, theme))
                     )
                 }
 
@@ -273,7 +269,7 @@ fun MarkerSaveMenu(
                     mapViewModel.addAlarm(false)
                     mapViewModel.onMoveMarker(null, null)
                 }) {
-                    Text("Save", color = Color(0xffc296ff))
+                    Text(resources.getString(R.string.save), color = Color(resources.getColor(R.color.light_purple, theme)))
                 }
 
                 TextButton(onClick = {
@@ -292,7 +288,7 @@ fun MarkerSaveMenu(
 
                     mapViewModel.onMoveMarker(null, null)
                 }) {
-                    Text("Start", color = Color(0xFF3EB38A))
+                    Text(resources.getString(R.string.start), color = Color(resources.getColor(R.color.light_green, theme)))
                 }
 
             }
@@ -300,6 +296,7 @@ fun MarkerSaveMenu(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.M)
 @ExperimentalPermissionsApi
 @ExperimentalAnimationApi
 @Composable
@@ -312,6 +309,8 @@ fun MainMapScreen(
 
     //Store context
     val context = LocalContext.current
+    val resources = context.resources
+    val theme = context.theme
 
     //Data
     val lastMarker: Marker? by mapViewModel.lastMarker.observeAsState()
@@ -330,14 +329,14 @@ fun MainMapScreen(
 
         Scaffold(
             topBar = {
-                TopAppBar(backgroundColor = Color(0xFF141F38)) {
+                TopAppBar(backgroundColor = Color(resources.getColor(R.color.dark_blue, theme))) {
                     IconButton(onClick = {
-                        navController.navigate("alarms")
+                        navController.navigate(resources.getString(R.string.alarms_route))
                         mapViewModel.onMoveMarker(null, null)
                     }) {
-                        Icon(Icons.Default.Menu, "Menu", tint = Color.White)
+                        Icon(Icons.Default.Menu, resources.getString(R.string.menu), tint = Color.White)
                     }
-                    Text(text = "Geo Alarm", color = Color.White)
+                    Text(text = resources.getString(R.string.app_name), color = Color.White)
 
 
                 }

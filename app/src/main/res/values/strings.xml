@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">GeoAlarm</string>
+    <string name="app_name">Geo Alarm</string>
     <string name="channel_id">GeoAlarmChannelId</string>
     <string name="geofence_unknown_error">
   Unknown error: the Geofence service is not available now.
@@ -13,4 +13,40 @@
     <string name="geofence_too_many_pending_intents">
   You have provided too many PendingIntents to the addGeofences() call.
 </string>
+
+    <string name="alarms_route">alarms</string>
+
+    <string name="ghost_icon">Ghost icon</string>
+    <string name="location_icon">Location icon</string>
+    <string name="search_icon">Search icon</string>
+    <string name="map_icon">Map Logo</string>
+    <string name="red_cross_icon">Red Cross</string>
+
+    <string name="menu">Menu</string>
+    <string name="close">Close</string>
+    <string name="start">Start</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="save">Save</string>
+    <string name="entry">Entry</string>
+    <string name="exit">Exit</string>
+    <string name="location">Location</string>
+    <string name="ok">Ok!</string>
+    <string name="open_settings">Open Settings</string>
+
+    <string name="alarm_name_label">Alarm Name</string>
+    <string name="radius_label">Radius :\ </string>
+
+    <string name="location_format">%.4f, %.4f</string>
+    <string name="location_present_format">Lat: %.4f Long: %.4f</string>
+    <string name="radius_format">%d m</string>
+
+    <string name="no_alarms">Ouhh..it\'s empty here.</string>
+    <string name="add_alarms_prompt">Go back and add some GeoAlarms :)</string>
+    <string name="bg_location_prompt">To set up GeoAlarms, we need access to your location at all times. Please grant the permission.</string>
+    <string name="bg_location_denied">Location permission denied too many times. Please, grant us access on the Settings screen.</string>
+    <string name="location_prompt">Please give us access to your GPS location</string>
+    <string name="location_rationale">This will us to notify you when you enter a area with a GeoAlarm. This is needed for the core functionality of the app</string>
+    <string name="location_denied">Location permission denied too many times. Please, grant us access on the Settings screen.</string>
+
 </resources>
