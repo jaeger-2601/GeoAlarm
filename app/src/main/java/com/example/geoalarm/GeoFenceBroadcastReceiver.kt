@@ -18,18 +18,21 @@ import com.example.geoalarm.data.room.GeoAlarmDatabase
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofenceStatusCodes
 import com.google.android.gms.location.GeofencingEvent
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.runBlocking
+import javax.inject.Inject
 
 
 const val TAG = "GeoFenceBroadcastReceiver"
 
+@AndroidEntryPoint
 class GeoFenceBroadcastReceiver : BroadcastReceiver() {
-    // ...
+
+    @Inject lateinit var  dataSource : AlarmsDao
 
     @SuppressLint("LongLogTag")
     override fun onReceive(context: Context, intent: Intent?) {
 
-        val dataSource = GeoAlarmDatabase.getInstance(context).alarmsDao()
 
         val geofencingEvent = GeofencingEvent.fromIntent(intent)
         if (geofencingEvent.hasError()) {
@@ -56,7 +59,7 @@ class GeoFenceBroadcastReceiver : BroadcastReceiver() {
         geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT) {
 
             //build and send notification
-            buildNotification(context, geofencingEvent, fullScreenPendingIntent, dataSource)?.let {
+            buildNotification(context, geofencingEvent, fullScreenPendingIntent)?.let {
 
                 with(NotificationManagerCompat.from(context)){
 
@@ -85,7 +88,7 @@ class GeoFenceBroadcastReceiver : BroadcastReceiver() {
 
 
     @SuppressLint("LongLogTag")
-    fun buildNotification(context: Context?, geofencingEvent: GeofencingEvent, fullScreenPendingIntent:PendingIntent, dataSource: AlarmsDao): Notification? {
+    fun buildNotification(context: Context?, geofencingEvent: GeofencingEvent, fullScreenPendingIntent:PendingIntent): Notification? {
 
         val geofence = geofencingEvent.triggeringGeofences[0]
         val alarm =  get(dataSource, geofence.requestId.toInt())

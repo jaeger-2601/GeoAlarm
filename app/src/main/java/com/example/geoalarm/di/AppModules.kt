@@ -61,14 +61,3 @@ object GeoFencingModule {
     }
 
 }
-
-@Module
-@InstallIn(SingletonComponent::class)
-object RandomStringModule {
-
-    @Provides
-    @Singleton
-    fun provideRandomString() : String{
-        return "alfalfa's"
-    }
-}
