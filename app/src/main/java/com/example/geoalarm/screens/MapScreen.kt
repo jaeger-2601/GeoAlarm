@@ -1,7 +1,6 @@
 package com.example.geoalarm
 
 import android.annotation.SuppressLint
-import android.app.PendingIntent
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -30,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.LiveData
 import androidx.navigation.NavController
 import com.example.geoalarm.data.Alarm
@@ -39,11 +39,9 @@ import com.example.geoalarm.screens.BackgroundLocationAccessDenied
 import com.example.geoalarm.screens.BackgroundLocationAccessRationale
 import com.example.geoalarm.screens.LocationAccessDenied
 import com.example.geoalarm.screens.LocationAccessRationale
-import com.example.geoalarm.utils.addGeofence
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionRequired
 import com.google.accompanist.permissions.rememberPermissionState
-import com.google.android.gms.location.GeofencingClient
 import com.google.android.libraries.maps.GoogleMap
 import com.google.android.libraries.maps.MapView
 import com.google.android.libraries.maps.model.Circle
@@ -146,8 +144,6 @@ fun MapViewContainer(
 @Composable
 fun MarkerSaveMenu(
     mapViewModel: MapScreenViewModel,
-    geofencingClient: GeofencingClient,
-    geofencePendingIntent: PendingIntent
 ) {
 
     val alarmName by mapViewModel.alarmName.observeAsState("")
@@ -226,7 +222,12 @@ fun MarkerSaveMenu(
                     onClick = { mapViewModel.onChangeAlarmType(AlarmType.ON_ENTRY) },
                     modifier = Modifier
                         .background(
-                            if (alarmType == AlarmType.ON_ENTRY) Color(resources.getColor(R.color.light_green, theme)) else Color.White
+                            if (alarmType == AlarmType.ON_ENTRY) Color(
+                                resources.getColor(
+                                    R.color.light_green,
+                                    theme
+                                )
+                            ) else Color.White
                         )
                         .fillMaxWidth(0.35F)
                 ) {
@@ -240,7 +241,12 @@ fun MarkerSaveMenu(
                     onClick = { mapViewModel.onChangeAlarmType(AlarmType.ON_EXIT) },
                     modifier = Modifier
                         .background(
-                            if (alarmType == AlarmType.ON_EXIT) Color(resources.getColor(R.color.light_green, theme)) else Color.White
+                            if (alarmType == AlarmType.ON_EXIT) Color(
+                                resources.getColor(
+                                    R.color.light_green,
+                                    theme
+                                )
+                            ) else Color.White
                         )
                         .fillMaxWidth(0.5F)
                 ) {
@@ -266,26 +272,14 @@ fun MarkerSaveMenu(
                 }
 
                 TextButton(onClick = {
-                    mapViewModel.addAlarm(false)
+                    mapViewModel.addAlarm(false, context)
                     mapViewModel.onMoveMarker(null, null)
                 }) {
                     Text(resources.getString(R.string.save), color = Color(resources.getColor(R.color.light_purple, theme)))
                 }
 
                 TextButton(onClick = {
-
-                    mapViewModel.addAlarm(true)?.let {
-                        addGeofence(
-                            geofencingClient,
-                            geofencePendingIntent,
-                            it,
-                            context,
-                            success = { Log.i("MarkerSaveMenu", "Geofence successfully added") },
-                            failure = { error, _ -> Log.e("MarkerSaveMenu", error) }
-                        )
-                    }
-
-
+                    mapViewModel.addAlarm(true, context)
                     mapViewModel.onMoveMarker(null, null)
                 }) {
                     Text(resources.getString(R.string.start), color = Color(resources.getColor(R.color.light_green, theme)))
@@ -302,15 +296,14 @@ fun MarkerSaveMenu(
 @Composable
 fun MainMapScreen(
     navController: NavController,
-    geofencingClient: GeofencingClient,
-    geofencePendingIntent: PendingIntent,
-    mapViewModel: MapScreenViewModel
+    mapViewModel: MapScreenViewModel = hiltViewModel()
 ) {
 
     //Store context
     val context = LocalContext.current
     val resources = context.resources
     val theme = context.theme
+
 
     //Data
     val lastMarker: Marker? by mapViewModel.lastMarker.observeAsState()
@@ -369,7 +362,7 @@ fun MainMapScreen(
                         exit = fadeOut(animationSpec = tween(durationMillis = 1000))
                     ) {
 
-                        MarkerSaveMenu(mapViewModel, geofencingClient, geofencePendingIntent)
+                        MarkerSaveMenu(mapViewModel)
                     }
                 }
             }

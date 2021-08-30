@@ -8,9 +8,12 @@ import com.example.geoalarm.data.room.AlarmsDao
 import com.example.geoalarm.utils.addGeofence
 import com.example.geoalarm.utils.removeGeoFence
 import com.google.android.gms.location.GeofencingClient
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class AlarmsScreenViewModel(
+@HiltViewModel
+class AlarmsScreenViewModel @Inject constructor(
     val database: AlarmsDao,
     val geofencingClient: GeofencingClient,
     val geofencePendingIntent: PendingIntent

@@ -1,6 +1,8 @@
 package com.example.geoalarm.data
 
 import android.annotation.SuppressLint
+import android.app.PendingIntent
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.*
 import com.example.geoalarm.ENTER_CIRCLE_OPTIONS
@@ -8,18 +10,23 @@ import com.example.geoalarm.ENTER_MARKER_OPTIONS
 import com.example.geoalarm.EXIT_CIRCLE_OPTIONS
 import com.example.geoalarm.EXIT_MARKER_OPTIONS
 import com.example.geoalarm.data.room.AlarmsDao
+import com.example.geoalarm.utils.addGeofence
+import com.google.android.gms.location.GeofencingClient
 import com.google.android.libraries.maps.GoogleMap
 import com.google.android.libraries.maps.model.Circle
 import com.google.android.libraries.maps.model.CircleOptions
 import com.google.android.libraries.maps.model.Marker
 import com.google.android.libraries.maps.model.MarkerOptions
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import java.util.*
+import javax.inject.Inject
 
-
-class MapScreenViewModel(
-    private val database: AlarmsDao
+@HiltViewModel
+class MapScreenViewModel @Inject constructor(
+    private val database: AlarmsDao,
+    private val geofencingClient: GeofencingClient,
+    private val geofencePendingIntent: PendingIntent
 ) : ViewModel() {
 
     private val _lastMarker = MutableLiveData<Marker?>(null)
@@ -75,28 +82,46 @@ class MapScreenViewModel(
         _alarmType.value = type
     }
 
-    fun addAlarm(
-        is_active: Boolean,
-    ): Alarm? {
+    fun addAlarm(is_active: Boolean, context: Context){
 
-        lastMarker.value?.let {
+        viewModelScope.launch {
 
-            val alarm = Alarm(
-                name = alarmName.value!!,
-                location = it.position,
-                radius = areaRadius.value ?: 1,
-                type = alarmType.value!!,
-                is_active = is_active,
-                created_at = Date()
-            )
-            runBlocking {
+            lastMarker.value?.let {
+
+
+                val alarm = Alarm(
+                    name = alarmName.value!!,
+                    location = it.position,
+                    radius = areaRadius.value ?: 1,
+                    type = alarmType.value!!,
+                    is_active = is_active,
+                    created_at = Date()
+                )
+
                 database.insert(alarm)
+
+                if (is_active) {
+
+                    // Alarm is again retrieved from database using location since
+                    // alarm id is auto generated upon insertion and the geofencing request id
+                    // is the same as the id of the alarm.
+
+                    database.get(alarm.location)?.let { alarm ->
+                        addGeofence(
+                            geofencingClient,
+                            geofencePendingIntent,
+                            alarm,
+                            context,
+                            success = { Log.i("addAlarm", "Geofence successfully added") },
+                            failure = { error, _ -> Log.e("addAlarm", error) }
+                            )
+                    }
+                }
+
+
             }
 
-            return runBlocking { database.get(alarm.location) }
         }
-
-        return null
     }
 
 
@@ -104,7 +129,6 @@ class MapScreenViewModel(
     fun mapUpdate(googleMap: GoogleMap) {
 
         // Update google maps with the creation and deletion of markers
-
         viewModelScope.launch {
 
             var isPresent: Boolean
@@ -209,6 +233,7 @@ class MapScreenViewModel(
         }
 
     }
+
 
     fun onMapDestroyed() {
         isMapInitialized = false
