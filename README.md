@@ -1,6 +1,6 @@
 # Geo Alarm
 
-Geo Alarm is a location based reminder app. Geo Alarm allows users to set alarm/reminders all over the map and keeps track of them using the *Geofencing API*  
+Geo Alarm is a location based reminder app. Geo Alarm allows users to set alarm/reminders all over the map and keeps track of them using the *Geofencing API*.
 Users can use Geo Alarm to create *geofences*, and create alarms to ring on entry , or on exit from a location.
 
 
