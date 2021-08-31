@@ -10,6 +10,8 @@ import com.example.geoalarm.ENTER_MARKER_OPTIONS
 import com.example.geoalarm.EXIT_CIRCLE_OPTIONS
 import com.example.geoalarm.EXIT_MARKER_OPTIONS
 import com.example.geoalarm.data.room.AlarmsDao
+import com.example.geoalarm.navigation.Directions
+import com.example.geoalarm.navigation.NavigationManager
 import com.example.geoalarm.repository.AlarmsRepository
 import com.example.geoalarm.utils.addGeofence
 import com.google.android.gms.location.GeofencingClient
@@ -26,6 +28,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MapScreenViewModel @Inject constructor(
     private val repository: AlarmsRepository,
+    private val navigationManager: NavigationManager,
     private val geofencingClient: GeofencingClient,
     private val geofencePendingIntent: PendingIntent
 ) : ViewModel() {
@@ -107,11 +110,11 @@ class MapScreenViewModel @Inject constructor(
                     // alarm id is auto generated upon insertion and the geofencing request id
                     // is the same as the id of the alarm.
 
-                    repository.getAlarmByLocation(alarm.location)?.let { alarm ->
+                    repository.getAlarmByLocation(alarm.location)?.let { alarm1 ->
                         addGeofence(
                             geofencingClient,
                             geofencePendingIntent,
-                            alarm,
+                            alarm1,
                             context,
                             success = { Log.i("addAlarm", "Geofence successfully added") },
                             failure = { error, _ -> Log.e("addAlarm", error) }
@@ -130,6 +133,9 @@ class MapScreenViewModel @Inject constructor(
     fun mapUpdate(googleMap: GoogleMap) {
 
         // Update google maps with the creation and deletion of markers
+
+        Log.i("mapUpdate", "Updating Map")
+
         viewModelScope.launch {
 
             var isPresent: Boolean
@@ -145,16 +151,16 @@ class MapScreenViewModel @Inject constructor(
                 googleMap.mapType = GoogleMap.MAP_TYPE_TERRAIN
                 googleMap.isMyLocationEnabled = true
 
-                googleMap.clear()
-
                 isMapInitialized = true
+
+                Log.i("mapUpdate", "Initializing map")
             }
 
             if (alarms.value == null)
                 return@launch
 
 
-            Log.i("mapUpdate", "Updating Map")
+
             Log.i(
                 "mapUpdate",
                 "activeAlarms:${activeAlarms.size} googleMapMarkers:${googleMapMarkers.size} LiveData:${alarms.value?.filter { it.is_active }?.size}"
@@ -234,9 +240,22 @@ class MapScreenViewModel @Inject constructor(
 
     }
 
+    fun goToAlarmsScreen() {
+        navigationManager.navigate(Directions.Alarms)
+    }
 
     fun onMapDestroyed() {
+
         isMapInitialized = false
+
+        for (marker in googleMapMarkers) {
+            marker.remove()
+        }
+
+        for (circle in googleMapCircles) {
+            circle.remove()
+        }
+
         googleMapMarkers.clear()
         googleMapCircles.clear()
     }

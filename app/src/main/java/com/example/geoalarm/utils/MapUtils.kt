@@ -51,12 +51,10 @@ private fun getMapLifecycleObserver(mapView: MapView, onMapDestroy: () -> Unit):
             }
             Lifecycle.Event.ON_RESUME -> {
                 Log.i("getMapLifecycleObserver", "onResume")
-                onMapDestroy()
                 mapView.onResume()
             }
             Lifecycle.Event.ON_PAUSE -> {
                 Log.i("getMapLifecycleObserver", "onPause")
-                onMapDestroy()
                 mapView.onPause()
             }
             Lifecycle.Event.ON_STOP -> {

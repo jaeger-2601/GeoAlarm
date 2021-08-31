@@ -5,6 +5,8 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.*
 import com.example.geoalarm.data.room.AlarmsDao
+import com.example.geoalarm.navigation.Directions
+import com.example.geoalarm.navigation.NavigationManager
 import com.example.geoalarm.repository.AlarmsRepository
 import com.example.geoalarm.utils.addGeofence
 import com.example.geoalarm.utils.removeGeoFence
@@ -16,8 +18,9 @@ import javax.inject.Inject
 @HiltViewModel
 class AlarmsScreenViewModel @Inject constructor(
     private val repository: AlarmsRepository,
-    val geofencingClient: GeofencingClient,
-    val geofencePendingIntent: PendingIntent
+    private val navigationManager: NavigationManager,
+    private val geofencingClient: GeofencingClient,
+    private val geofencePendingIntent: PendingIntent
 ) : ViewModel() {
 
     private val TAG = "AlarmsScreenViewModel"
@@ -122,6 +125,10 @@ class AlarmsScreenViewModel @Inject constructor(
         }
 
         menuClose()
+    }
+
+    fun goToMapScreen() {
+        navigationManager.navigate(Directions.Map)
     }
 
     fun isAlarmActiveLive(id: Int) : LiveData<Boolean> {

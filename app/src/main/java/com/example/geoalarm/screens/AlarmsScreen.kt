@@ -36,7 +36,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.LiveData
-import androidx.navigation.NavHostController
 import com.example.geoalarm.data.Alarm
 import com.example.geoalarm.data.AlarmType
 import com.example.geoalarm.data.AlarmsScreenViewModel
@@ -284,23 +283,21 @@ fun AlarmEditMenu(viewModel: AlarmsScreenViewModel) {
 @ExperimentalAnimationApi
 @ExperimentalMaterialApi
 @Composable
-fun AlarmScreen(navController: NavHostController, viewModel: AlarmsScreenViewModel = hiltViewModel()) {
+fun AlarmScreen(alarmsViewModel: AlarmsScreenViewModel = hiltViewModel()) {
 
-    val alarms by viewModel.alarms.observeAsState()
-    val selectedAlarm by viewModel.selectedAlarm.observeAsState()
+    val alarms by alarmsViewModel.alarms.observeAsState()
+    val selectedAlarm by alarmsViewModel.selectedAlarm.observeAsState()
 
     val context = LocalContext.current
     val resources = context.resources
     val theme = context.theme
 
-    Log.i("Screen", "AlarmScreen")
-
     Scaffold(
         topBar = {
             TopAppBar(backgroundColor = Color(resources.getColor(R.color.dark_blue, theme))) {
                 IconButton(onClick = {
-                    viewModel.menuClose()
-                    navController.popBackStack()
+                    alarmsViewModel.menuClose()
+                    alarmsViewModel.goToMapScreen()
                 }) {
                     Icon(Icons.Default.ArrowBack, resources.getString(R.string.menu), tint = Color.White)
                 }
@@ -342,9 +339,9 @@ fun AlarmScreen(navController: NavHostController, viewModel: AlarmsScreenViewMod
                             items(it) { alarm: Alarm ->
                                 AlarmCard(
                                     alarm,
-                                    viewModel,
-                                    viewModel.isAlarmActiveLive(alarm.id)
-                                ) { _ -> viewModel.toggleAlarm(alarm, context) }
+                                    alarmsViewModel,
+                                    alarmsViewModel.isAlarmActiveLive(alarm.id)
+                                ) { _ -> alarmsViewModel.toggleAlarm(alarm, context) }
                             }
                         }
                     }
@@ -361,7 +358,7 @@ fun AlarmScreen(navController: NavHostController, viewModel: AlarmsScreenViewMod
                             enter = fadeIn(animationSpec = tween(durationMillis = 1000)),
                             exit = fadeOut(animationSpec = tween(durationMillis = 1000))
                         ) {
-                            AlarmEditMenu(viewModel)
+                            AlarmEditMenu(alarmsViewModel)
                         }
                     }
                 }

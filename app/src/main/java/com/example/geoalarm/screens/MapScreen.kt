@@ -64,7 +64,6 @@ fun MapViewContainer(
     val gAlarms by alarms.observeAsState()
     val resources = LocalContext.current.resources
 
-    Log.i("Screen", "MapViewContainer")
 
     AndroidView({ map }) { mapView ->
 
@@ -158,7 +157,6 @@ fun MarkerSaveMenu(
     val bgLocationPermissionState =
         rememberPermissionState(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION)
 
-    Log.i("Screen", "MarkerSaveMenu")
 
     PermissionRequired(
         permissionState = bgLocationPermissionState,
@@ -295,7 +293,6 @@ fun MarkerSaveMenu(
 @ExperimentalAnimationApi
 @Composable
 fun MainMapScreen(
-    navController: NavController,
     mapViewModel: MapScreenViewModel = hiltViewModel()
 ) {
 
@@ -324,7 +321,7 @@ fun MainMapScreen(
             topBar = {
                 TopAppBar(backgroundColor = Color(resources.getColor(R.color.dark_blue, theme))) {
                     IconButton(onClick = {
-                        navController.navigate(resources.getString(R.string.alarms_route))
+                        mapViewModel.goToAlarmsScreen()
                         mapViewModel.onMoveMarker(null, null)
                     }) {
                         Icon(Icons.Default.Menu, resources.getString(R.string.menu), tint = Color.White)

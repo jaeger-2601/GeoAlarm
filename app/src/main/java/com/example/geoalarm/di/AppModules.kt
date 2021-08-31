@@ -7,6 +7,7 @@ import androidx.room.Room
 import com.example.geoalarm.GeoFenceBroadcastReceiver
 import com.example.geoalarm.data.room.AlarmsDao
 import com.example.geoalarm.data.room.GeoAlarmDatabase
+import com.example.geoalarm.navigation.NavigationManager
 import com.example.geoalarm.repository.AlarmsRepository
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.LocationServices
@@ -73,4 +74,15 @@ object RepositoryModule {
         return AlarmsRepository(alarmsDao)
     }
 
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+object NavigationModule {
+
+    @Provides
+    @Singleton
+    fun providesNavigationManager() : NavigationManager {
+        return NavigationManager()
+    }
 }
