@@ -36,15 +36,11 @@ class MainActivity : ComponentActivity() {
 
         NavHost(navController = navController, startDestination = "map") {
             composable("map") {
-                MainMapScreen(
-                    navController,
-                )
+                MainMapScreen(navController)
             }
 
             composable("alarms") {
-                AlarmScreen(
-                    navController,
-                )
+                AlarmScreen(navController)
             }
 
         }

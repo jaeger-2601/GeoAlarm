@@ -35,6 +35,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.LiveData
 import androidx.navigation.NavHostController
 import com.example.geoalarm.data.Alarm
 import com.example.geoalarm.data.AlarmType
@@ -45,12 +46,13 @@ import com.example.geoalarm.data.AlarmsScreenViewModel
 fun AlarmCard(
     alarm: Alarm,
     viewModel: AlarmsScreenViewModel,
-    isActive: Boolean,
+    isActiveLiveData: LiveData<Boolean>,
     toggleAlarm: (Boolean) -> Unit
 ) {
 
-    Log.i("Screen", "AlarmCard")
     val resources = LocalContext.current.resources
+
+    val isActive by isActiveLiveData.observeAsState(false)
 
     Card(modifier = Modifier.fillMaxWidth(), onClick = { viewModel.changeSelectedAlarm(alarm) }) {
         Row(
@@ -341,8 +343,7 @@ fun AlarmScreen(navController: NavHostController, viewModel: AlarmsScreenViewMod
                                 AlarmCard(
                                     alarm,
                                     viewModel,
-                                    viewModel.database.isAlarmActive(alarm.id)
-                                        .observeAsState(false).value
+                                    viewModel.isAlarmActiveLive(alarm.id)
                                 ) { _ -> viewModel.toggleAlarm(alarm, context) }
                             }
                         }

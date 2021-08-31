@@ -15,6 +15,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.example.geoalarm.data.Alarm
 import com.example.geoalarm.data.room.AlarmsDao
 import com.example.geoalarm.data.room.GeoAlarmDatabase
+import com.example.geoalarm.repository.AlarmsRepository
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofenceStatusCodes
 import com.google.android.gms.location.GeofencingEvent
@@ -28,7 +29,7 @@ const val TAG = "GeoFenceBroadcastReceiver"
 @AndroidEntryPoint
 class GeoFenceBroadcastReceiver : BroadcastReceiver() {
 
-    @Inject lateinit var  dataSource : AlarmsDao
+    @Inject lateinit var repository: AlarmsRepository
 
     @SuppressLint("LongLogTag")
     override fun onReceive(context: Context, intent: Intent?) {
@@ -41,7 +42,6 @@ class GeoFenceBroadcastReceiver : BroadcastReceiver() {
             Log.e(TAG, errorMessage)
             return
         }
-
 
         val fullScreenIntent = Intent(context, AlarmActivity::class.java)
 
@@ -91,8 +91,7 @@ class GeoFenceBroadcastReceiver : BroadcastReceiver() {
     fun buildNotification(context: Context?, geofencingEvent: GeofencingEvent, fullScreenPendingIntent:PendingIntent): Notification? {
 
         val geofence = geofencingEvent.triggeringGeofences[0]
-        val alarm =  get(dataSource, geofence.requestId.toInt())
-
+        val alarm =  runBlocking { repository.getAlarmById(geofence.requestId.toInt()) }
 
         val alarmSound: Uri =
             RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
@@ -127,7 +126,4 @@ class GeoFenceBroadcastReceiver : BroadcastReceiver() {
         return notificationBuilder?.build()
     }
 
-    fun get(dataSource: AlarmsDao, id: Int): Alarm? {
-        return runBlocking { dataSource.get(id) }
-    }
 }

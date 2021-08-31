@@ -7,6 +7,7 @@ import androidx.room.Room
 import com.example.geoalarm.GeoFenceBroadcastReceiver
 import com.example.geoalarm.data.room.AlarmsDao
 import com.example.geoalarm.data.room.GeoAlarmDatabase
+import com.example.geoalarm.repository.AlarmsRepository
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.LocationServices
 import dagger.Module
@@ -58,6 +59,18 @@ object GeoFencingModule {
     @Singleton
     fun provideGeoFencingClient(@ApplicationContext appContext: Context) : GeofencingClient {
         return LocationServices.getGeofencingClient(appContext)
+    }
+
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+object RepositoryModule {
+
+    @Provides
+    @Singleton
+    fun provideRepository(alarmsDao: AlarmsDao) : AlarmsRepository {
+        return AlarmsRepository(alarmsDao)
     }
 
 }

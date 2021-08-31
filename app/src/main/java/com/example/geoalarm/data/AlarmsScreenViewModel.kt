@@ -5,6 +5,7 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.*
 import com.example.geoalarm.data.room.AlarmsDao
+import com.example.geoalarm.repository.AlarmsRepository
 import com.example.geoalarm.utils.addGeofence
 import com.example.geoalarm.utils.removeGeoFence
 import com.google.android.gms.location.GeofencingClient
@@ -14,14 +15,14 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AlarmsScreenViewModel @Inject constructor(
-    val database: AlarmsDao,
+    private val repository: AlarmsRepository,
     val geofencingClient: GeofencingClient,
     val geofencePendingIntent: PendingIntent
 ) : ViewModel() {
 
     private val TAG = "AlarmsScreenViewModel"
 
-    val alarms = database.getAllAlarmsLive()
+    val alarms = repository.getAlarmsLive()
 
     private val _selectedAlarm: MutableLiveData<Alarm?> = MutableLiveData(null)
     val selectedAlarm: LiveData<Alarm?>
@@ -89,7 +90,7 @@ class AlarmsScreenViewModel @Inject constructor(
         alarm.is_active = !alarm.is_active
 
         viewModelScope.launch {
-            database.update(alarm)
+            repository.updateAlarm(alarm)
         }
 
     }
@@ -105,7 +106,7 @@ class AlarmsScreenViewModel @Inject constructor(
             it.radius = areaRadius.value ?: it.radius
 
             viewModelScope.launch {
-                database.update(it)
+                repository.updateAlarm(it)
             }
         }
 
@@ -116,11 +117,15 @@ class AlarmsScreenViewModel @Inject constructor(
 
         selectedAlarm.value?.let {
             viewModelScope.launch {
-                database.delete(it)
+                repository.deleteAlarm(it)
             }
         }
 
         menuClose()
+    }
+
+    fun isAlarmActiveLive(id: Int) : LiveData<Boolean> {
+        return repository.isAlarmActiveLive(id)
     }
 
 

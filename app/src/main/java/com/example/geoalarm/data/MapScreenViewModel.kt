@@ -10,6 +10,7 @@ import com.example.geoalarm.ENTER_MARKER_OPTIONS
 import com.example.geoalarm.EXIT_CIRCLE_OPTIONS
 import com.example.geoalarm.EXIT_MARKER_OPTIONS
 import com.example.geoalarm.data.room.AlarmsDao
+import com.example.geoalarm.repository.AlarmsRepository
 import com.example.geoalarm.utils.addGeofence
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.libraries.maps.GoogleMap
@@ -24,7 +25,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MapScreenViewModel @Inject constructor(
-    private val database: AlarmsDao,
+    private val repository: AlarmsRepository,
     private val geofencingClient: GeofencingClient,
     private val geofencePendingIntent: PendingIntent
 ) : ViewModel() {
@@ -54,7 +55,7 @@ class MapScreenViewModel @Inject constructor(
         sliderPosition.value?.times(1000)?.toInt()
     }
 
-    val alarms = database.getAllAlarmsLive()
+    val alarms = repository.getAlarmsLive()
 
     private var googleMapMarkers = mutableListOf<Marker>()
     private var googleMapCircles = mutableListOf<Circle>()
@@ -98,7 +99,7 @@ class MapScreenViewModel @Inject constructor(
                     created_at = Date()
                 )
 
-                database.insert(alarm)
+                repository.addAlarm(alarm)
 
                 if (is_active) {
 
@@ -106,7 +107,7 @@ class MapScreenViewModel @Inject constructor(
                     // alarm id is auto generated upon insertion and the geofencing request id
                     // is the same as the id of the alarm.
 
-                    database.get(alarm.location)?.let { alarm ->
+                    repository.getAlarmByLocation(alarm.location)?.let { alarm ->
                         addGeofence(
                             geofencingClient,
                             geofencePendingIntent,
@@ -137,8 +138,7 @@ class MapScreenViewModel @Inject constructor(
             var markerOptions: MarkerOptions
             var circleOptions: CircleOptions
             // LiveData alarms does not update value properly, use the suspend function inside a coroutine to get the list instead.
-            val activeAlarms = database.getActiveAlarms()
-
+            val activeAlarms = repository.getActiveAlarms()
 
             if (!isMapInitialized) {
 
