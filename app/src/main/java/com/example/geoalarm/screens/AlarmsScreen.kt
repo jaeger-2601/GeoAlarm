@@ -1,7 +1,6 @@
-package com.example.geoalarm
+package com.example.geoalarm.screens
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -35,7 +34,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.LiveData
+import com.example.geoalarm.R
 import com.example.geoalarm.data.Alarm
 import com.example.geoalarm.data.AlarmType
 import com.example.geoalarm.data.AlarmsScreenViewModel
@@ -43,15 +42,12 @@ import com.example.geoalarm.data.AlarmsScreenViewModel
 @ExperimentalMaterialApi
 @Composable
 fun AlarmCard(
-    alarm: Alarm,
     viewModel: AlarmsScreenViewModel,
-    isActiveLiveData: LiveData<Boolean>,
-    toggleAlarm: (Boolean) -> Unit
+    alarm: Alarm
 ) {
-
-    val resources = LocalContext.current.resources
-
-    val isActive by isActiveLiveData.observeAsState(false)
+    val context = LocalContext.current
+    val resources = context.resources
+    val isActive by viewModel.isAlarmActiveLive(alarm.id).observeAsState(false)
 
     Card(modifier = Modifier.fillMaxWidth(), onClick = { viewModel.changeSelectedAlarm(alarm) }) {
         Row(
@@ -76,7 +72,7 @@ fun AlarmCard(
 
                     Switch(
                         checked = isActive,
-                        onCheckedChange = toggleAlarm,
+                        onCheckedChange = { viewModel.toggleAlarm(alarm, context) },
                         modifier = Modifier.padding(0.dp, 17.dp, 0.dp, 10.dp)
                     )
 
@@ -89,8 +85,6 @@ fun AlarmCard(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
 
-                    /*
-                    }*/
 
                     Row {
                         Icon(
@@ -102,7 +96,9 @@ fun AlarmCard(
                             )
 
                         Text(
-                            text = if (alarm.type == AlarmType.ON_ENTRY) resources.getString(R.string.entry) else resources.getString(R.string.exit),
+                            text = if (alarm.type == AlarmType.ON_ENTRY) resources.getString(R.string.entry) else resources.getString(
+                                R.string.exit
+                            ),
                             fontStyle = FontStyle.Italic,
                             color = Color.Gray
                         )
@@ -337,11 +333,7 @@ fun AlarmScreen(alarmsViewModel: AlarmsScreenViewModel = hiltViewModel()) {
                     Box {
                         LazyColumn {
                             items(it) { alarm: Alarm ->
-                                AlarmCard(
-                                    alarm,
-                                    alarmsViewModel,
-                                    alarmsViewModel.isAlarmActiveLive(alarm.id)
-                                ) { _ -> alarmsViewModel.toggleAlarm(alarm, context) }
+                                AlarmCard(alarmsViewModel, alarm)
                             }
                         }
                     }

@@ -22,11 +22,11 @@ object GeofenceErrorMessages {
         }
     }
 
-    fun getErrorString(context: Context, errorCode: Int): String {
+    private fun getErrorString(context: Context, errorCode: Int): String {
 
         val resources = context.resources
 
-        val GEOFENCE_IMPROPER_PERMISSIONS = 13
+        val geoFenceImproperPermissions = 13
 
         return when (errorCode) {
 
@@ -39,8 +39,8 @@ object GeofenceErrorMessages {
             GeofenceStatusCodes.GEOFENCE_TOO_MANY_PENDING_INTENTS ->
                 resources.getString(R.string.geofence_too_many_pending_intents)
 
-            GEOFENCE_IMPROPER_PERMISSIONS ->
-                "Improper permissions"
+            geoFenceImproperPermissions ->
+                resources.getString(R.string.geofence_improper_permissions)
 
             else -> resources.getString(R.string.geofence_unknown_error)
         }
@@ -111,7 +111,7 @@ fun removeGeoFence(
     failure: (error: String, exception: Exception) -> Unit
 ) {
     geofencingClient
-        .removeGeofences(mutableListOf(alarm.id.toString(),))
+        .removeGeofences(mutableListOf(alarm.id.toString()))
         .addOnSuccessListener {
             //saveAll(getAll() + reminder)
             success()

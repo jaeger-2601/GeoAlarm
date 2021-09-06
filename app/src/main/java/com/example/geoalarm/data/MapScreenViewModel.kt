@@ -5,11 +5,10 @@ import android.app.PendingIntent
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.*
-import com.example.geoalarm.ENTER_CIRCLE_OPTIONS
-import com.example.geoalarm.ENTER_MARKER_OPTIONS
-import com.example.geoalarm.EXIT_CIRCLE_OPTIONS
-import com.example.geoalarm.EXIT_MARKER_OPTIONS
-import com.example.geoalarm.data.room.AlarmsDao
+import com.example.geoalarm.utils.ENTER_CIRCLE_OPTIONS
+import com.example.geoalarm.utils.ENTER_MARKER_OPTIONS
+import com.example.geoalarm.utils.EXIT_CIRCLE_OPTIONS
+import com.example.geoalarm.utils.EXIT_MARKER_OPTIONS
 import com.example.geoalarm.navigation.Directions
 import com.example.geoalarm.navigation.NavigationManager
 import com.example.geoalarm.repository.AlarmsRepository
@@ -38,7 +37,7 @@ class MapScreenViewModel @Inject constructor(
         get() = _lastMarker
 
     private val _lastCircle = MutableLiveData<Circle?>(null)
-    val lastCircle: LiveData<Circle?>
+    private val lastCircle: LiveData<Circle?>
         get() = _lastCircle
 
     private val _alarmName = MutableLiveData("")

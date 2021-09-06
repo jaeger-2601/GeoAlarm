@@ -1,5 +1,6 @@
 package com.example.geoalarm.di
 
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
@@ -41,6 +42,7 @@ object DatabaseModule {
 @InstallIn(SingletonComponent::class)
 object GeoFencingModule {
 
+    @SuppressLint("UnspecifiedImmutableFlag")
     @Provides
     @Singleton
     fun provideGeoFencingIntent(@ApplicationContext appContext: Context) : PendingIntent {

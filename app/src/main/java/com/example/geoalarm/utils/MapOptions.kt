@@ -1,4 +1,4 @@
-package com.example.geoalarm
+package com.example.geoalarm.utils
 
 import com.google.android.libraries.maps.model.CircleOptions
 import com.google.android.libraries.maps.model.Dash

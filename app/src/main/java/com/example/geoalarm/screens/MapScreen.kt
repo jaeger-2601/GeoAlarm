@@ -1,4 +1,4 @@
-package com.example.geoalarm
+package com.example.geoalarm.screens
 
 import android.annotation.SuppressLint
 import android.os.Build
@@ -30,21 +30,15 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.LiveData
-import androidx.navigation.NavController
-import com.example.geoalarm.data.Alarm
+import com.example.geoalarm.utils.CURRENT_CIRCLE_OPTIONS
+import com.example.geoalarm.utils.CURRENT_MARKER_OPTIONS
+import com.example.geoalarm.R
 import com.example.geoalarm.data.AlarmType
 import com.example.geoalarm.data.MapScreenViewModel
-import com.example.geoalarm.screens.BackgroundLocationAccessDenied
-import com.example.geoalarm.screens.BackgroundLocationAccessRationale
-import com.example.geoalarm.screens.LocationAccessDenied
-import com.example.geoalarm.screens.LocationAccessRationale
+import com.example.geoalarm.utils.rememberMapViewWithLifecycle
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionRequired
 import com.google.accompanist.permissions.rememberPermissionState
-import com.google.android.libraries.maps.GoogleMap
-import com.google.android.libraries.maps.MapView
-import com.google.android.libraries.maps.model.Circle
 import com.google.android.libraries.maps.model.Marker
 import com.google.android.libraries.maps.model.MarkerOptions
 import com.google.maps.android.ktx.awaitMap
@@ -52,16 +46,13 @@ import kotlinx.coroutines.launch
 
 @SuppressLint("MissingPermission")
 @Composable
-fun MapViewContainer(
-    map: MapView,
-    alarms: LiveData<List<Alarm>>,
-    mapUpdate: (GoogleMap) -> Unit,
-    currentCircleSize: () -> Double,
-    moveMarker: (Marker?, Circle?) -> Unit,
-    isLastMarker: (Marker) -> Boolean
-) {
+fun MapViewContainer(mapViewModel: MapScreenViewModel) {
+
+    val map = rememberMapViewWithLifecycle { mapViewModel.onMapDestroyed() }
+    val gAlarms by mapViewModel.alarms.observeAsState()
+    val areaRadius by mapViewModel.areaRadius.observeAsState()
+    val lastMarker by mapViewModel.lastMarker.observeAsState()
     val coroutineScope = rememberCoroutineScope()
-    val gAlarms by alarms.observeAsState()
     val resources = LocalContext.current.resources
 
 
@@ -73,12 +64,12 @@ fun MapViewContainer(
             Log.i("MapViewContainer", "coroutineScope : Map rendered")
             Log.i("mapUpdate", "Launching mapUpdate : ${gAlarms?.size}")
 
-            mapUpdate(googleMap)
+            mapViewModel.mapUpdate(googleMap)
 
             googleMap.setOnMarkerClickListener {
 
-                if (isLastMarker(it))
-                    moveMarker(null, null)
+                if (it.position == lastMarker?.position)
+                    mapViewModel.onMoveMarker(null, null)
                 else
                     it.showInfoWindow()
 
@@ -90,7 +81,7 @@ fun MapViewContainer(
                 val circle = googleMap.addCircle(
                     CURRENT_CIRCLE_OPTIONS
                         .center(it)
-                        .radius(currentCircleSize())
+                        .radius((areaRadius ?: 0).toDouble())
 
 
                 )
@@ -102,7 +93,7 @@ fun MapViewContainer(
                         .snippet(resources.getString(R.string.location_present_format).format(it.latitude, it.longitude))
                 )
 
-                moveMarker(marker, circle)
+                mapViewModel.onMoveMarker(marker, circle)
                 marker.showInfoWindow()
 
             }
@@ -112,7 +103,7 @@ fun MapViewContainer(
                 val circle = googleMap.addCircle(
                     CURRENT_CIRCLE_OPTIONS
                         .center(poi.latLng)
-                        .radius(currentCircleSize())
+                        .radius((areaRadius ?: 0).toDouble())
 
                 )
 
@@ -129,7 +120,7 @@ fun MapViewContainer(
                         )
                 )
 
-                moveMarker(poiMarker, circle)
+                mapViewModel.onMoveMarker(poiMarker, circle)
                 poiMarker.showInfoWindow()
             }
         }
@@ -141,9 +132,7 @@ fun MapViewContainer(
 @SuppressLint("InlinedApi")
 @ExperimentalPermissionsApi
 @Composable
-fun MarkerSaveMenu(
-    mapViewModel: MapScreenViewModel,
-) {
+fun MarkerSaveMenu(mapViewModel: MapScreenViewModel) {
 
     val alarmName by mapViewModel.alarmName.observeAsState("")
     val areaRadius by mapViewModel.areaRadius.observeAsState()
@@ -301,10 +290,7 @@ fun MainMapScreen(
     val resources = context.resources
     val theme = context.theme
 
-
-    //Data
     val lastMarker: Marker? by mapViewModel.lastMarker.observeAsState()
-    val areaRadius: Int? by mapViewModel.areaRadius.observeAsState()
 
     val locationPermissionState =
         rememberPermissionState(android.Manifest.permission.ACCESS_FINE_LOCATION)
@@ -336,14 +322,7 @@ fun MainMapScreen(
             Box {
 
                 Box {
-                    MapViewContainer(
-                        map = rememberMapViewWithLifecycle { mapViewModel.onMapDestroyed() },
-                        alarms = mapViewModel.alarms,
-                        currentCircleSize = { (areaRadius ?: 0).toDouble() },
-                        mapUpdate = { map -> mapViewModel.mapUpdate(map) },
-                        moveMarker = { m: Marker?, c: Circle? -> mapViewModel.onMoveMarker(m, c) },
-                        isLastMarker = { it.position == lastMarker?.position }
-                    )
+                    MapViewContainer(mapViewModel = mapViewModel)
                 }
 
                 Box(

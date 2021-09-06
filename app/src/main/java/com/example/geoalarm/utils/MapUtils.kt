@@ -1,4 +1,4 @@
-package com.example.geoalarm
+package com.example.geoalarm.utils
 
 import android.os.Bundle
 import android.util.Log
@@ -9,6 +9,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.example.geoalarm.R
 import com.google.android.libraries.maps.MapView
 
 

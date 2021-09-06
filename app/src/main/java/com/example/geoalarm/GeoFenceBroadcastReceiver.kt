@@ -12,9 +12,6 @@ import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.example.geoalarm.data.Alarm
-import com.example.geoalarm.data.room.AlarmsDao
-import com.example.geoalarm.data.room.GeoAlarmDatabase
 import com.example.geoalarm.repository.AlarmsRepository
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofenceStatusCodes
@@ -31,7 +28,7 @@ class GeoFenceBroadcastReceiver : BroadcastReceiver() {
 
     @Inject lateinit var repository: AlarmsRepository
 
-    @SuppressLint("LongLogTag")
+    @SuppressLint("LongLogTag", "UnspecifiedImmutableFlag")
     override fun onReceive(context: Context, intent: Intent?) {
 
 

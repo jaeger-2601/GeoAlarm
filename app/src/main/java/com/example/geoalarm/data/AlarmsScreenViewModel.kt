@@ -4,7 +4,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.*
-import com.example.geoalarm.data.room.AlarmsDao
 import com.example.geoalarm.navigation.Directions
 import com.example.geoalarm.navigation.NavigationManager
 import com.example.geoalarm.repository.AlarmsRepository

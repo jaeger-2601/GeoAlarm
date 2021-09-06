@@ -27,9 +27,9 @@ class TypeConverters {
 
         if (string == null) return null
 
-        val latlong = string.split(",").toTypedArray()
-        val latitude = latlong[0].toDouble()
-        val longitude = latlong[1].toDouble()
+        val latLong = string.split(",").toTypedArray()
+        val latitude = latLong[0].toDouble()
+        val longitude = latLong[1].toDouble()
 
         return LatLng(latitude, longitude)
     }
@@ -42,6 +42,6 @@ class TypeConverters {
     @TypeConverter
     fun fromOrdinal(num:Int?): AlarmType? {
 
-        return num?.let{ AlarmType.values()[it] } ?: null
+        return num?.let{ AlarmType.values()[it] }
     }
 }

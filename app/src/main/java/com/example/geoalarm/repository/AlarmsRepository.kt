@@ -4,9 +4,7 @@ import androidx.lifecycle.LiveData
 import com.example.geoalarm.data.Alarm
 import com.example.geoalarm.data.room.AlarmsDao
 import com.google.android.libraries.maps.model.LatLng
-import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
-import javax.inject.Singleton
 
 class AlarmsRepository @Inject constructor(private val alarmsDao : AlarmsDao) {
 

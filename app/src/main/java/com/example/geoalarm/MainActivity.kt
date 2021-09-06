@@ -15,15 +15,14 @@ import androidx.annotation.RequiresApi
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navigation
 import com.example.geoalarm.navigation.Directions
 import com.example.geoalarm.navigation.NavigationManager
+import com.example.geoalarm.screens.AlarmScreen
+import com.example.geoalarm.screens.MainMapScreen
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -31,7 +30,6 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    private val CHANNEL_ID = "GeoAlarm"
 
     @Inject
     lateinit var navigationManager : NavigationManager
@@ -46,7 +44,7 @@ class MainActivity : ComponentActivity() {
         val navController = rememberNavController()
 
         navigationManager.command.observe(LocalLifecycleOwner.current) {
-            Log.i("NavigationManager", "Navigation to ${it.destination}")
+            Log.i("NavigationManager", "Navigating to ${it.destination}")
             navController.navigate(it.destination)
         }
 
@@ -79,11 +77,11 @@ class MainActivity : ComponentActivity() {
 
 
             val channel = NotificationChannel(
-                CHANNEL_ID,
-                "GeoAlarm",
+                getString(R.string.channel_id),
+                getString(R.string.app_name),
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "Notification channel for GeoAlarm"
+                description = getString(R.string.channel_description)
                 this.setSound(soundUri, audioAttributes)
                 this.enableVibration(true)
             }
