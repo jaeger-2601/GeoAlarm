@@ -18,7 +18,6 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -30,11 +29,11 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.geoalarm.utils.CURRENT_CIRCLE_OPTIONS
-import com.example.geoalarm.utils.CURRENT_MARKER_OPTIONS
 import com.example.geoalarm.R
 import com.example.geoalarm.data.AlarmType
 import com.example.geoalarm.data.MapScreenViewModel
+import com.example.geoalarm.utils.CURRENT_CIRCLE_OPTIONS
+import com.example.geoalarm.utils.CURRENT_MARKER_OPTIONS
 import com.example.geoalarm.utils.rememberMapViewWithLifecycle
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionRequired
@@ -42,6 +41,8 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.libraries.maps.model.Marker
 import com.google.android.libraries.maps.model.MarkerOptions
 import com.google.maps.android.ktx.awaitMap
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @SuppressLint("MissingPermission")
@@ -52,17 +53,17 @@ fun MapViewContainer(mapViewModel: MapScreenViewModel) {
     val gAlarms by mapViewModel.alarms.observeAsState()
     val areaRadius by mapViewModel.areaRadius.observeAsState()
     val lastMarker by mapViewModel.lastMarker.observeAsState()
-    val coroutineScope = rememberCoroutineScope()
+
     val resources = LocalContext.current.resources
 
 
     AndroidView({ map }) { mapView ->
 
-        coroutineScope.launch {
+        CoroutineScope(Dispatchers.Main).launch {
             val googleMap = mapView.awaitMap()
 
             Log.i("MapViewContainer", "coroutineScope : Map rendered")
-            Log.i("mapUpdate", "Launching mapUpdate : ${gAlarms?.size}")
+            Log.i("mapUpdate", "gAlarms size : ${gAlarms?.size}")
 
             mapViewModel.mapUpdate(googleMap)
 
