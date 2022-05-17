@@ -48,6 +48,10 @@ class MapScreenViewModel @Inject constructor(
     val alarmType: LiveData<AlarmType>
         get() = _alarmType
 
+    private val _actionType = MutableLiveData(ActionType.ALARM)
+    val actionType: LiveData<ActionType>
+        get() = _actionType
+
 
     val areaRadius = Transformations.map(sliderPosition) {
         sliderPosition.value?.times(1000)?.toInt()
@@ -79,6 +83,10 @@ class MapScreenViewModel @Inject constructor(
 
     fun onChangeAlarmType(type: AlarmType) {
         _alarmType.value = type
+    }
+
+    fun onChangeActionType(type: ActionType){
+        _actionType.value = type
     }
 
     fun addAlarm(is_active: Boolean, context: Context){

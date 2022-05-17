@@ -33,6 +33,8 @@
     <string name="save">Save</string>
     <string name="entry">Entry</string>
     <string name="exit">Exit</string>
+    <string name="alarm">Alarm</string>
+    <string name="email">Email</string>
     <string name="location">Location</string>
     <string name="ok">OK!</string>
     <string name="open_settings">Open Settings</string>

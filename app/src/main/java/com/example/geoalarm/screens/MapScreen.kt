@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.geoalarm.R
+import com.example.geoalarm.data.ActionType
 import com.example.geoalarm.data.AlarmType
 import com.example.geoalarm.data.MapScreenViewModel
 import com.example.geoalarm.utils.CURRENT_CIRCLE_OPTIONS
@@ -139,6 +140,7 @@ fun MarkerSaveMenu(mapViewModel: MapScreenViewModel) {
     val areaRadius by mapViewModel.areaRadius.observeAsState()
     val sliderValue by mapViewModel.sliderPosition.observeAsState(0f)
     val alarmType by mapViewModel.alarmType.observeAsState(AlarmType.ON_ENTRY)
+    val actionType by mapViewModel.actionType.observeAsState(ActionType.ALARM)
 
     val context = LocalContext.current
     val resources = context.resources
@@ -241,6 +243,52 @@ fun MarkerSaveMenu(mapViewModel: MapScreenViewModel) {
                     Text(
                         resources.getString(R.string.exit),
                         color = if (alarmType == AlarmType.ON_EXIT) Color.White else Color.Black
+                    )
+
+                }
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(0.dp, 0.dp, 0.dp, 10.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                TextButton(
+                    onClick = { mapViewModel.onChangeActionType(ActionType.ALARM) },
+                    modifier = Modifier
+                        .background(
+                            if (actionType == ActionType.ALARM) Color(
+                                resources.getColor(
+                                    R.color.light_orange,
+                                    theme
+                                )
+                            ) else Color.White
+                        )
+                        .fillMaxWidth(0.35F)
+                ) {
+                    Text(
+                        resources.getString(R.string.alarm),
+                        color = if (actionType == ActionType.ALARM) Color.White else Color.Black
+                    )
+
+                }
+                TextButton(
+                    onClick = { mapViewModel.onChangeActionType(ActionType.EMAIL) },
+                    modifier = Modifier
+                        .background(
+                            if (actionType == ActionType.EMAIL) Color(
+                                resources.getColor(
+                                    R.color.light_orange,
+                                    theme
+                                )
+                            ) else Color.White
+                        )
+                        .fillMaxWidth(0.5F)
+                ) {
+                    Text(
+                        resources.getString(R.string.email),
+                        color = if (actionType == ActionType.EMAIL) Color.White else Color.Black
                     )
 
                 }

@@ -13,6 +13,13 @@ enum class AlarmType{
     ON_EXIT
 }
 
+enum class ActionType{
+    ALARM,
+    EMAIL
+}
+
+// Add email table
+
 @Entity(
     tableName = "alarms",
     indices = [
